@@ -12,12 +12,18 @@ const ui = `${app}\n${demo}`;
 for (const phrase of ["controlled_runtime", "new_analysis", "Evidence drawer", "Execution timeline", "signal ranking", "Save / export", "datetime-local", "Window start (UTC)", "+00:00", "window_start", "createObjectURL", "Withhold retrieved sources", "suggestions only", "Technical details", "Application log", "Technical record", "source_event", "0.24", "820 ms", "08:04:00Z", "08:04:30Z", "08:04:45Z", "09:05:00Z", "09:05:15Z", "09:05:30Z", "10:05:00Z", "No metric records returned"]) {
   assert.ok(ui.includes(phrase), `UI contract missing: ${phrase}`);
 }
+for (const phrase of ["mode=live", "VITE_INCIDENT_LENS_API_ORIGIN", "redirect: \"error\"", "apiHref", "Live backend opt-in", "first wake may take about one minute", "Retry connection", "Provider generation", "Non-provider deterministic fallback", "Support status", "Cited sources and evidence", "liveWorkflowReady", "No successful live workflow claim", "Live backend workflow surface"]) {
+  assert.ok(ui.includes(phrase), `live surface contract missing: ${phrase}`);
+}
 for (const phrase of ["VITE_INCIDENT_LENS_DEMO", "Public demo · authored fixture · browser-local", "FastAPI/PostgreSQL backend, live provider/connector, and repair actions are not running.", "localStorage", "incident-lens:public-demo:v2", "fixture-v1", "validateUpload", "reportKeys"]) {
   assert.ok(ui.includes(phrase), `demo contract missing: ${phrase}`);
 }
 assert.ok(app.includes("apiFetch"), "UI must route through the API/demo adapter");
 assert.ok(app.includes("Browser-local preview ready"), "demo connection status must be explicit");
 assert.ok(app.includes("FastAPI/PostgreSQL backend, live provider/connector, and repair actions are not running."), "demo notice must disclose unavailable services");
+assert.ok(app.includes('result.status !== "completed"'), "live mode must require a completed workflow response");
+assert.ok(app.includes("liveWorkflowReady"), "live review/save actions must require a successful claim");
+assert.ok(app.includes('isLiveMode ? "Live backend workflow surface'), "live footer must not claim a local Phase 1 surface");
 for (const phrase of ["id=\"investigate\"", "id=\"evaluation\"", "id=\"engineering\"", "Investigate", "Evaluation", "Engineering", "aria-current={activeSection === id ? \"location\"", "href={`#${id}`}"]) {
   assert.ok(app.includes(phrase), `navigation/section contract missing: ${phrase}`);
 }

@@ -8,6 +8,7 @@ from threading import Event
 from typing import Any, Dict, Optional
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from incident_lens import CONTRACT_VERSION
@@ -33,7 +34,9 @@ from incident_lens.api.models import (
 )
 from incident_lens.connectors import ConnectorError, connector_from_environment, connector_status
 from incident_lens.api.store import iso, parse_json, select_store, utc_now
+from incident_lens.config import load_settings
 from incident_lens.observability import MetricsMiddleware, RequestMetrics
+from incident_lens.provider import build_answer_generator
 from incident_lens.retrieval import HybridRetriever, KnowledgeIndex
 from incident_lens.uploads import SAMPLE_JSONL, UploadManager
 from incident_lens.worker.runner import BoundedInvestigationRunner
@@ -90,13 +93,30 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
     store.seed_cases(load_cases())
     runner = BoundedInvestigationRunner(store)
     upload_manager = UploadManager()
+    settings = load_settings()
+    answer_generator = build_answer_generator(settings)
     app = FastAPI(title="Incident Lens API", version=CONTRACT_VERSION)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(settings.cors_allowed_origins),
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Accept", "Content-Type", "Idempotency-Key", "X-Session-ID"],
+        expose_headers=["Content-Disposition"],
+    )
     metrics = RequestMetrics()
     app.add_middleware(MetricsMiddleware, metrics=metrics)
     app.state.store = store
     app.state.runner = runner
     app.state.uploads = upload_manager
     app.state.metrics = metrics
+    app.state.answer_generator = answer_generator
+
+    @app.on_event("shutdown")
+    def close_answer_generator() -> None:
+        closer = getattr(answer_generator, "close", None)
+        if closer:
+            closer()
 
     def owned_run(run_id: str, session_id: Optional[str]) -> Dict[str, Any]:
         run = store.get_run(run_id)
@@ -218,7 +238,11 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
     def run_workflow(run_id: str, request: WorkflowRequest, x_session_id: Optional[str] = Header(default=None, alias="X-Session-ID")) -> WorkflowResponse:
         owned_run(run_id, x_session_id)
         index_path = Path(__file__).resolve().parents[3] / "data" / "knowledge" / "verified-runbooks-v1.json"
-        workflow = InvestigationWorkflow(store, HybridRetriever(KnowledgeIndex.from_manifest(index_path)))
+        workflow = InvestigationWorkflow(
+            store,
+            HybridRetriever(KnowledgeIndex.from_manifest(index_path)),
+            answer_generator=app.state.answer_generator,
+        )
         cancel_event = Event()
         if request.cancel:
             cancel_event.set()
@@ -407,3 +431,4 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
 
 app = create_app()
 atexit.register(app.state.store.close)
+atexit.register(app.state.answer_generator.close if hasattr(app.state.answer_generator, "close") else lambda: None)

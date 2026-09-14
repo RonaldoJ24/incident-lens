@@ -4,6 +4,12 @@
 Incident Lens. **Status:** no external deployment or public URL has been
 verified.
 
+The checked-in frontend remains an instant authored-fixture Pages demo by
+default. A live opt-in uses `?mode=live` and a build-time absolute HTTPS
+`VITE_INCIDENT_LENS_API_ORIGIN`; it does not replay the browser fixture. The
+API must allow only the exact Pages origin (plus explicitly required local
+origins) through `INCIDENT_LENS_CORS_ALLOWED_ORIGINS`, with no credentials.
+
 ## Pre-release gate
 
 Run `make setup` once, then `make release-check`. In CI, the same checks run in

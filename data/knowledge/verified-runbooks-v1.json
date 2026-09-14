@@ -15,7 +15,7 @@
       "url": "https://opentelemetry.io/docs/demo/",
       "citation": "OpenTelemetry Demo documentation, docs@2026-09-13",
       "source_kind": "public_documentation",
-      "text": "The OpenTelemetry Demo is a microservice application used to demonstrate and learn telemetry instrumentation, collection, and visualization."
+      "text": "The OpenTelemetry Demo is a microservice application used to demonstrate telemetry instrumentation, collection, and visualization."
     },
     {
       "source_id": "otel-feature-flags-docs",
@@ -34,6 +34,105 @@
       "citation": "Incident Lens evidence guidance, knowledge@2026-09-14",
       "source_kind": "reviewed_prior_knowledge",
       "text": "A bounded investigation should compare logs, metrics, and traces in the same time window, preserve missing-signal warnings, and avoid treating a release timestamp as causal proof."
+    },
+    {
+      "source_id": "otel-observability-primer",
+      "source_version": "docs@2026-09-14",
+      "title": "OpenTelemetry observability primer",
+      "url": "https://opentelemetry.io/docs/concepts/observability-primer/",
+      "citation": "OpenTelemetry observability primer, docs@2026-09-14",
+      "source_kind": "public_documentation",
+      "text": "OpenTelemetry describes observability as asking questions about a system from the outside. Instrumentation emits traces, metrics, and logs, while reliability should be considered from the user's perspective."
+    },
+    {
+      "source_id": "otel-signals-concepts",
+      "source_version": "docs@2026-09-14",
+      "title": "OpenTelemetry signals concepts",
+      "url": "https://opentelemetry.io/docs/concepts/signals/",
+      "citation": "OpenTelemetry signals concepts, docs@2026-09-14",
+      "source_kind": "public_documentation",
+      "text": "OpenTelemetry groups telemetry into signals including traces, metrics, and logs. Each signal provides a different view of system behavior and should be interpreted with its context."
+    },
+    {
+      "source_id": "otel-instrumentation-concepts",
+      "source_version": "docs@2026-09-14",
+      "title": "OpenTelemetry instrumentation concepts",
+      "url": "https://opentelemetry.io/docs/concepts/instrumentation/",
+      "citation": "OpenTelemetry instrumentation concepts, docs@2026-09-14",
+      "source_kind": "public_documentation",
+      "text": "OpenTelemetry instrumentation can be supplied by libraries or application code. The choice depends on the information and control needed to observe the application."
+    },
+    {
+      "source_id": "otel-collector-docs",
+      "source_version": "docs@2026-09-14",
+      "title": "OpenTelemetry Collector",
+      "url": "https://opentelemetry.io/docs/collector/",
+      "citation": "OpenTelemetry Collector documentation, docs@2026-09-14",
+      "source_kind": "public_runbook_reference",
+      "text": "The OpenTelemetry Collector provides a vendor-neutral way to receive, process, and export telemetry. It can centralize handling such as retries, batching, encryption, and sensitive-data filtering."
+    },
+    {
+      "source_id": "otel-collector-components",
+      "source_version": "docs@2026-09-14",
+      "title": "OpenTelemetry Collector components",
+      "url": "https://opentelemetry.io/docs/collector/components/",
+      "citation": "OpenTelemetry Collector components documentation, docs@2026-09-14",
+      "source_kind": "public_runbook_reference",
+      "text": "Collector pipelines are assembled from receivers, processors, exporters, connectors, and extensions. Components handle distinct stages of receiving and transforming telemetry."
+    },
+    {
+      "source_id": "otel-demo-architecture",
+      "source_version": "docs@2026-09-14",
+      "title": "OpenTelemetry Demo architecture",
+      "url": "https://opentelemetry.io/docs/demo/architecture/",
+      "citation": "OpenTelemetry Demo architecture, docs@2026-09-14",
+      "source_kind": "public_documentation",
+      "text": "The Demo is composed of services written in different languages that communicate over gRPC and HTTP. Its Collector configuration and service instrumentation are part of the architecture reference."
+    },
+    {
+      "source_id": "otel-demo-telemetry-features",
+      "source_version": "docs@2026-09-14",
+      "title": "OpenTelemetry Demo telemetry features",
+      "url": "https://opentelemetry.io/docs/demo/telemetry-features/",
+      "citation": "OpenTelemetry Demo telemetry features, docs@2026-09-14",
+      "source_kind": "public_documentation",
+      "text": "The Demo instruments services with traces and selected metrics and logs, sends telemetry to a Collector, and exposes data in separate observability backends."
+    },
+    {
+      "source_id": "otel-demo-services",
+      "source_version": "docs@2026-09-14",
+      "title": "OpenTelemetry Demo services",
+      "url": "https://opentelemetry.io/docs/demo/services/",
+      "citation": "OpenTelemetry Demo services, docs@2026-09-14",
+      "source_kind": "public_documentation",
+      "text": "The Demo service reference describes checkout orchestration and supporting services such as cart, payment, shipping, and product catalog, helping investigators map request flows."
+    },
+    {
+      "source_id": "otel-logging-spec",
+      "source_version": "spec@2026-09-14",
+      "title": "OpenTelemetry logging specification",
+      "url": "https://opentelemetry.io/docs/specs/otel/logs/",
+      "citation": "OpenTelemetry logging specification, spec@2026-09-14",
+      "source_kind": "public_specification",
+      "text": "OpenTelemetry's log model is designed to work with existing logging systems while improving correlation. Trace and span context and resource information can connect logs with other signals."
+    },
+    {
+      "source_id": "otel-metrics-spec",
+      "source_version": "spec@2026-09-14",
+      "title": "OpenTelemetry metrics specification",
+      "url": "https://opentelemetry.io/docs/specs/otel/metrics/",
+      "citation": "OpenTelemetry metrics specification, spec@2026-09-14",
+      "source_kind": "public_specification",
+      "text": "The OpenTelemetry metrics specification defines the data model and instruments used to record measurements. Metrics are aggregated observations and require an explicit time range and context for interpretation."
+    },
+    {
+      "source_id": "otel-traces-spec",
+      "source_version": "spec@2026-09-14",
+      "title": "OpenTelemetry tracing specification",
+      "url": "https://opentelemetry.io/docs/specs/otel/trace/",
+      "citation": "OpenTelemetry tracing specification, spec@2026-09-14",
+      "source_kind": "public_specification",
+      "text": "The OpenTelemetry tracing specification defines spans and trace context for representing work across services. Trace context propagation lets investigators relate operations in a distributed request."
     }
   ]
 }

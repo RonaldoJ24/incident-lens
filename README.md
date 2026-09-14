@@ -14,6 +14,13 @@ It runs the demo adapter in the browser and makes the boundary visible: the
 FastAPI/PostgreSQL backend, model provider, live connector, and repair actions
 are not running at that URL.
 
+The Pages build remains this instant demo by default. An explicitly selected
+`?mode=live` URL uses the build-time `VITE_INCIDENT_LENS_API_ORIGIN` absolute
+HTTPS backend origin, never the demo adapter, and shows whether the backend is
+starting, ready, or unavailable. Render Free may sleep, so its first wake can
+take about one minute; the checked-in Pages workflow keeps a non-secret origin
+placeholder until the backend URL is externally verified.
+
 Verified delivery evidence:
 
 | Surface | Evidence |
@@ -193,9 +200,12 @@ Pages preview described above.
   and globally aggregated/non-operational metrics. The resulting comparison is
   provisional; no model or threshold selection is accepted, and the final
   held-out split remains sealed.
-- **Phase 4 is deliberately local:** no real model/provider is configured. The
-  retrieval corpus has three documents and the checked-in Recall@3 check is
-  trivial; this is not production-quality generative investigation evidence.
+- **Phase 4 remains deliberately unverified live:** the repository now includes
+  a bounded provider-neutral OpenAI-compatible runtime seam and a labelled
+  deterministic no-key fallback. The reviewed local corpus has 14 concise
+  summaries and 15 public-demo retrieval queries (Recall@1/Recall@3/MRR are
+  local-corpus measurements only). No live provider call or production-quality
+  generative investigation result is claimed.
 - **Connector scope is metadata-only:** the owned verification proves one
   bounded GitHub Actions metadata call, not application telemetry, diagnosis,
   recovery, or broader coverage.

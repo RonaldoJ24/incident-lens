@@ -14,7 +14,34 @@ export const demoCases: DemoCase[] = [
   { case_id: "insufficient-evidence", title: "Insufficient evidence", description: "Gap example with no metric or trace records in its interval.", service: "checkoutservice", telemetry_origin: "controlled_runtime", fixture_kind: "authored_synthetic_controlled_fixture", source_interval: { start: "2026-09-13T10:00:00Z", end: "2026-09-13T10:10:00Z" } },
 ];
 
-export const isDemoMode = import.meta.env.VITE_INCIDENT_LENS_DEMO === "1";
+function requestedMode(): string {
+  if (typeof window === "undefined") return "";
+  return new URLSearchParams(window.location.search).get("mode") ?? "";
+}
+
+// The Pages build remains the instant authored demo unless the user explicitly
+// opts into live mode with ?mode=live. A live URL never routes through this adapter.
+export const isLiveMode = requestedMode() === "live";
+export const isDemoMode = !isLiveMode && import.meta.env.VITE_INCIDENT_LENS_DEMO === "1";
+const configuredApiOrigin = String(import.meta.env.VITE_INCIDENT_LENS_API_ORIGIN ?? "").trim();
+
+function apiInput(input: RequestInfo | URL): URL {
+  const raw = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+  const base = typeof window === "undefined" ? "http://localhost" : window.location.origin;
+  const requested = new URL(raw, base);
+  const allowed = requested.pathname === "/v1" || requested.pathname.startsWith("/v1/") || requested.pathname === "/health" || requested.pathname.startsWith("/health/");
+  if (!allowed) throw new Error("API path is outside the Incident Lens surface");
+  if (requested.origin !== base) throw new Error("API requests must use a relative Incident Lens path");
+  if (!isLiveMode) return requested;
+  let origin: URL;
+  try { origin = new URL(configuredApiOrigin); } catch { throw new Error("Live API origin is not configured"); }
+  if (origin.protocol !== "https:" || (origin.pathname !== "/" && origin.pathname !== "")) throw new Error("Live API origin must be an absolute HTTPS origin");
+  return new URL(`${requested.pathname}${requested.search}`, origin.origin);
+}
+
+export function apiHref(path: string): string {
+  try { return apiInput(path).toString(); } catch { return "#"; }
+}
 const STORAGE_KEY = "incident-lens:public-demo:v2";
 const DEMO_SOURCE = { source_id: "incident-lens-authored-fixture", version: "fixture-v1" };
 const SAMPLE_JSONL = '{"event_id":"sample-log-1","timestamp":"2026-09-14T08:00:00Z","signal":"log","service":"checkoutservice","message":"request completed"}\n{"event_id":"sample-metric-1","timestamp":"2026-09-14T08:00:01Z","signal":"metric","service":"checkoutservice","value":42.0}\n{"event_id":"sample-trace-1","timestamp":"2026-09-14T08:00:02Z","signal":"trace","service":"checkoutservice","duration_ms":12.5}\n';
@@ -224,5 +251,7 @@ async function demoFetch(input: RequestInfo | URL, init?: RequestInit): Promise<
 }
 
 export function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  return isDemoMode ? demoFetch(input, init) : fetch(input, init);
+  if (isDemoMode) return demoFetch(input, init);
+  const target = apiInput(input);
+  return fetch(target, { ...init, redirect: "error" });
 }

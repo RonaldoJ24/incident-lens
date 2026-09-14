@@ -32,6 +32,11 @@ checkout example, and the selector includes degraded performance and
 insufficient evidence. Run, cancel, retry, review, save, and export actions
 are bounded and read-only; the timeline records the actual fixture checks.
 
+The Pages build defaults to the instant browser-local demo. Adding `?mode=live`
+selects the build-time `VITE_INCIDENT_LENS_API_ORIGIN` absolute HTTPS origin;
+that path never uses the demo adapter and reports starting, ready, or
+unavailable connection state.
+
 The guest upload boundary accepts only strict JSONL records with `log`,
 `metric`, and `trace` signals. Download the authored sample from
 `GET /v1/uploads/sample`, initiate a slot with

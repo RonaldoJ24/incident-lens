@@ -1,12 +1,16 @@
 {
   "report_version": "incident-lens-retrieval-evaluation-v1",
-  "status": "generated_by_test_fixture",
+  "status": "evaluated_local_corpus",
   "retrieval": {
     "method": "hybrid-lexical-tfidf-lsa-v1",
-    "queries": 3,
+    "documents": 14,
+    "queries": 15,
+    "recall_at_1": 1.0,
     "recall_at_k": 1.0,
     "mrr": 1.0,
-    "k": 3
+    "k": 3,
+    "decoy_candidates_in_manifest": true,
+    "manifest": "data/manifests/retrieval.json"
   },
   "claim_support": {
     "method": "lexical-support-v1",
@@ -15,7 +19,8 @@
     "unsupported_claim_status": "unsupported"
   },
   "limitations": [
-    "The report uses three reviewed local queries and summaries, not benchmark telemetry.",
+    "The report uses 15 reviewed local queries and 14 concise paraphrased public/project-authored summaries, not benchmark telemetry.",
+    "Metrics are for this small public-demo corpus and should not be generalized to production incident retrieval.",
     "TF-IDF/LSA is a deterministic local semantic fallback; no hosted model or live retrieval provider was called."
   ],
   "raw_data_in_repo": false

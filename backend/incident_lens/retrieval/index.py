@@ -132,5 +132,11 @@ class HybridRetriever:
             semantic = _cosine(query_vector, self._vectors[index]) if self._vectors is not None else 0.0
             combined = 0.6 * lexical + 0.4 * semantic
             scored.append((combined, lexical, semantic, document))
-        scored.sort(key=lambda item: (-item[0], item[3].source_id))
+        # A query with no lexical overlap has no grounded signal. Preserve the
+        # manifest order in that case instead of letting the LSA projection's
+        # positive cosine offset manufacture a misleading semantic winner.
+        if not any(item[1] > 0 for item in scored):
+            scored.sort(key=lambda item: self.index.documents.index(item[3]))
+        else:
+            scored.sort(key=lambda item: (-item[0], item[3].source_id))
         return [RetrievalHit(item[3], item[1], item[2], item[0], rank) for rank, item in enumerate(scored[:limit], 1)]

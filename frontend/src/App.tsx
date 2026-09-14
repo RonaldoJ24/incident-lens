@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import UploadPanel from "./UploadPanel";
-import { apiFetch, demoCases, isDemoMode } from "./demoAdapter";
+import { apiFetch, demoCases, isDemoMode, isLiveMode } from "./demoAdapter";
 
 type PreviewState = "empty" | "loading" | "running" | "partial" | "successful" | "unresolved" | "failed" | "cached" | "upload-invalid" | "upload-accepted" | "saved" | "export-failed";
 type CaseItem = {
@@ -16,6 +16,15 @@ type RunItem = { run_id: string; status: string; attempt: number; provenance: { 
 type EvidenceItem = { evidence_id: string; source_type: string; content_or_summary: string; event_time: string; quality_flags: string[]; source?: { source_id: string; version: string }; source_event?: string; query_window?: { start: string; end: string }; access_scope?: string };
 type FindingItem = { finding_id: string; assessment: string; certainty: string; evidence_ids: string[]; next_checks: string[] };
 type TimelineItem = { event_id: string; step: string; state: string; scope: { operation: string; read_only: boolean; parameters?: Record<string, unknown> }; evidence_ids: string[]; duration_ms: number };
+type WorkflowClaim = {
+  text: string;
+  uncertainty: string;
+  next_checks: string[];
+  citation_source_ids: string[];
+  evidence_ids: string[];
+  generation?: { mode?: string; provider_status?: string; model?: string | null };
+  support?: { status?: string };
+};
 
 const fallbackCases: CaseItem[] = demoCases;
 
@@ -32,6 +41,12 @@ function StatusMessage({ state }: { state: PreviewState }) {
   return <p className={`status-message status-${state}`} role="status" aria-live="polite"><span aria-hidden="true">●</span> {stateCopy[state]}</p>;
 }
 
+function generationLabel(claim?: WorkflowClaim): string {
+  if (!claim?.generation) return "Generation details unavailable";
+  if (claim.generation.mode === "provider") return `Provider generation${claim.generation.model ? ` · ${claim.generation.model}` : ""}`;
+  return "Non-provider deterministic fallback · not fresh AI inference";
+}
+
 function App() {
   const [cases, setCases] = useState<CaseItem[]>(fallbackCases);
   const [selectedCaseId, setSelectedCaseId] = useState("checkout-failure");
@@ -42,16 +57,19 @@ function App() {
   const [finding, setFinding] = useState<FindingItem>();
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
-  const [apiStatus, setApiStatus] = useState<"loading" | "ready" | "unavailable">("loading");
+  const [apiStatus, setApiStatus] = useState<"starting" | "ready" | "unavailable">("starting");
   const [lastRunId, setLastRunId] = useState<string>();
+  const [workflowClaim, setWorkflowClaim] = useState<WorkflowClaim>();
+  const [connectionAttempt, setConnectionAttempt] = useState(0);
   const [activeSection, setActiveSection] = useState<"investigate" | "evaluation" | "engineering">("investigate");
   const [windowStart, setWindowStart] = useState(localInput(fallbackCases[0].source_interval.start));
   const [windowEnd, setWindowEnd] = useState(localInput(fallbackCases[0].source_interval.end));
   const windowStartRef = useRef<HTMLInputElement>(null);
   const selectedCase = useMemo(() => cases.find((item) => item.case_id === selectedCaseId) ?? fallbackCases[0], [cases, selectedCaseId]);
   const canRun = apiStatus === "ready" && Boolean(sessionId) && state !== "running";
-  const canReview = apiStatus === "ready" && Boolean(sessionId && run) && state !== "running";
-  const canSave = apiStatus === "ready" && Boolean(sessionId && run) && state !== "running";
+  const liveWorkflowReady = !isLiveMode || Boolean(workflowClaim);
+  const canReview = apiStatus === "ready" && Boolean(sessionId && run) && state !== "running" && liveWorkflowReady;
+  const canSave = apiStatus === "ready" && Boolean(sessionId && run) && state !== "running" && liveWorkflowReady;
 
   useEffect(() => {
     setWindowStart(localInput(selectedCase.source_interval.start));
@@ -61,7 +79,12 @@ function App() {
   useEffect(() => {
     let active = true;
     const boot = async () => {
+      if (active) setApiStatus("starting");
       try {
+        if (!isDemoMode) {
+          const healthResponse = await apiFetch("/health/ready");
+          if (!healthResponse.ok) throw new Error("API unavailable");
+        }
         const [sessionResponse, casesResponse] = await Promise.all([apiFetch("/v1/sessions", { method: "POST" }), apiFetch("/v1/cases")]);
         if (!sessionResponse.ok || !casesResponse.ok) throw new Error("API unavailable");
         const session = await sessionResponse.json() as { session_id: string; last_run_id?: string; last_run_case_id?: string };
@@ -71,7 +94,7 @@ function App() {
     };
     void boot();
     return () => { active = false; };
-  }, []);
+  }, [connectionAttempt]);
 
   const headers: Record<string, string> = sessionId ? { "X-Session-ID": sessionId } : {};
 
@@ -82,7 +105,7 @@ function App() {
     ]);
     if (!runResponse.ok || !evidenceResponse.ok || !findingResponse.ok || !timelineResponse.ok) throw new Error("Run could not be loaded");
     const nextRun = await runResponse.json() as RunItem;
-    setRun(nextRun); setEvidence((await evidenceResponse.json() as { evidence: EvidenceItem[] }).evidence); setFinding((await findingResponse.json() as { findings: FindingItem[] }).findings[0]); setTimeline((await timelineResponse.json() as { events: TimelineItem[] }).events);
+    setRun(nextRun); setEvidence((await evidenceResponse.json() as { evidence: EvidenceItem[] }).evidence); setFinding(isDemoMode ? (await findingResponse.json() as { findings: FindingItem[] }).findings[0] : undefined); setTimeline((await timelineResponse.json() as { events: TimelineItem[] }).events);
     setState(nextRun.status === "partial" ? "partial" : nextRun.status === "succeeded" ? "successful" : nextRun.status === "cancelled" ? "failed" : "running");
   };
 
@@ -104,12 +127,16 @@ function App() {
   const runWorkflow = async (runId: string, resume = true) => {
     if (!sessionId) return;
     const response = await apiFetch(`/v1/runs/${runId}/workflow`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ query: `${selectedCase.title} ${selectedCase.description}`, resume }) });
-    if (!response.ok) throw new Error("Workflow failed");
+    const result = await response.json() as { status?: string; error?: string; claims?: WorkflowClaim[] };
+    if (!response.ok || (!isDemoMode && result.status !== "completed") || (isDemoMode && result.status === "failed")) { setWorkflowClaim(undefined); throw new Error(result.error ?? "Workflow did not complete"); }
+    const claim = result.claims?.[0];
+    if (!isDemoMode && claim) setWorkflowClaim(claim);
   };
 
   const runCheck = async () => {
     if (!canRun || !sessionId || !windowStart || !windowEnd) return;
     setState("running");
+    if (isLiveMode) setWorkflowClaim(undefined);
     try {
       const response = await apiFetch("/v1/runs", { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": `ui-${selectedCaseId}-${Date.now()}` }, body: JSON.stringify({ session_id: sessionId, case_id: selectedCaseId, service: selectedCase.service, window_start: apiTimestamp(windowStart), window_end: apiTimestamp(windowEnd) }) });
       if (!response.ok) throw new Error("Run failed");
@@ -117,11 +144,12 @@ function App() {
       await refreshRun(runId);
       await runWorkflow(runId);
       await refreshRun(runId);
-    } catch { setState("failed"); }
+    } catch { setWorkflowClaim(undefined); setState("failed"); }
   };
 
   const cancelRun = async () => {
     if (!sessionId || !run) return;
+    setWorkflowClaim(undefined);
     try {
       const response = await apiFetch(`/v1/runs/${run.run_id}`, { method: "DELETE", headers });
       if (!response.ok) throw new Error("Cancel failed");
@@ -131,7 +159,7 @@ function App() {
 
   const review = async (action: "accept" | "correct" | "challenge" | "withhold_source") => {
     if (!canReview || !sessionId || !run) return;
-    try { const response = await apiFetch(`/v1/runs/${run.run_id}/review`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ action, note: "Review recorded in the current run context." }) }); if (!response.ok) throw new Error("Review failed"); if (action === "withhold_source") await runWorkflow(run.run_id, false); await refreshRun(run.run_id); } catch { setState("failed"); }
+    try { const response = await apiFetch(`/v1/runs/${run.run_id}/review`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ action, note: "Review recorded in the current run context." }) }); if (!response.ok) throw new Error("Review failed"); if (action === "withhold_source") await runWorkflow(run.run_id, false); await refreshRun(run.run_id); } catch { setWorkflowClaim(undefined); setState("failed"); }
   };
 
   const saveExport = async () => {
@@ -152,29 +180,34 @@ function App() {
     } catch { setState("export-failed"); }
   };
 
+  const retryConnection = () => { setWorkflowClaim(undefined); setState("empty"); setConnectionAttempt((attempt) => attempt + 1); };
+  const modeHref = (mode: "demo" | "live") => { const url = new URL(window.location.href); url.searchParams.set("mode", mode); return `${url.pathname}${url.search}${url.hash}`; };
+  const nextChecks = isLiveMode ? workflowClaim?.next_checks : finding?.next_checks;
+
   const selectCase = (caseId: string) => {
     const nextCase = cases.find((item) => item.case_id === caseId);
-    setSelectedCaseId(caseId); setRun(undefined); setFinding(undefined); setEvidence([]); setTimeline([]); setState("empty");
+    setSelectedCaseId(caseId); setRun(undefined); setFinding(undefined); setWorkflowClaim(undefined); setEvidence([]); setTimeline([]); setState("empty");
     if (nextCase) { setWindowStart(localInput(nextCase.source_interval.start)); setWindowEnd(localInput(nextCase.source_interval.end)); }
   };
-  const findingHeading = finding ? (finding.certainty === "insufficient_evidence" ? "Evidence gap" : selectedCaseId === "degraded-performance" ? "Latency signal ranking" : "Error signal ranking") : "Ready to inspect";
+  const findingHeading = isLiveMode ? (workflowClaim ? "Live workflow assessment" : state === "failed" ? "Live workflow unavailable" : "Awaiting live workflow") : finding ? (finding.certainty === "insufficient_evidence" ? "Evidence gap" : selectedCaseId === "degraded-performance" ? "Latency signal ranking" : "Error signal ranking") : "Ready to inspect";
   const navLink = (id: "investigate" | "evaluation" | "engineering", label: string) => <a className={activeSection === id ? "active" : undefined} aria-current={activeSection === id ? "location" : undefined} href={`#${id}`}>{label}</a>;
 
   return <div className="app-shell">
     <header className="site-header"><a className="brand" href="#investigate" aria-label="Incident Lens home">Incident Lens</a><nav aria-label="Primary navigation">{navLink("investigate", "Investigate")}{navLink("evaluation", "Evaluation")}{navLink("engineering", "Engineering")}</nav></header>
     <main id="investigate" aria-labelledby="investigate-heading">
-      {isDemoMode && <aside className="demo-banner" role="note"><strong>Public demo · authored fixture · browser-local</strong><span>FastAPI/PostgreSQL backend, live provider/connector, and repair actions are not running.</span></aside>}
+      {isDemoMode && <aside className="demo-banner" role="note"><strong>Public demo · authored fixture · browser-local</strong><span>FastAPI/PostgreSQL backend, live provider/connector, and repair actions are not running.</span><a href={modeHref("live")}>Try live backend</a></aside>}
+      {isLiveMode && <aside className="live-banner" role="status"><strong>Live backend opt-in</strong><span>Render Free can sleep; the first wake may take about one minute.</span><a href={modeHref("demo")}>Use instant authored demo</a>{apiStatus === "unavailable" && <button type="button" onClick={retryConnection}>Retry connection</button>}</aside>}
       <h2 id="investigate-heading" className="visually-hidden">Investigate</h2>
       <section className="context-bar" aria-labelledby="context-heading"><div><p className="eyebrow">Context</p><h1 id="context-heading">{selectedCase.title}</h1><div className="provenance" aria-label="Run status"><span>Source · Example records</span><span>{run ? `Completed · ${readableTimestamp(run.provenance.run_time)}` : "No run yet"}</span></div><details className="technical-details"><summary>Technical details</summary><dl><div><dt>Source origin</dt><dd>{selectedCase.telemetry_origin}</dd></div><div><dt>Fixture type</dt><dd>{selectedCase.fixture_kind}</dd></div><div><dt>Execution</dt><dd>{run?.provenance.execution ?? "not started"}</dd></div><div><dt>Run version</dt><dd>{run?.provenance.run_version ?? "not started"}</dd></div></dl></details></div><div className="context-controls"><label>Example<select value={selectedCaseId} onChange={(event) => selectCase(event.target.value)} aria-label="Choose incident example">{cases.map((item) => <option key={item.case_id} value={item.case_id}>{item.title}</option>)}</select></label><label>Service<select value={selectedCase.service} disabled aria-label="Selected service"><option>{selectedCase.service}</option></select></label><div className="time-window-fields"><label htmlFor="window-start">Window start (UTC)</label><input ref={windowStartRef} id="window-start" type="datetime-local" value={windowStart} onChange={(event) => setWindowStart(event.target.value)} /></div><div className="time-window-fields"><label htmlFor="window-end">Window end (UTC)</label><input id="window-end" type="datetime-local" value={windowEnd} onChange={(event) => setWindowEnd(event.target.value)} /></div><button className="primary" type="button" disabled={state === "running" ? !run : !canRun} onClick={() => void (state === "running" ? cancelRun() : runCheck())}>{state === "running" ? "Cancel run" : "Run check"}</button></div></section>
-      <div className="connection-row"><StatusMessage state={state} /><span className={`connection-note connection-${apiStatus}`} role={apiStatus === "unavailable" ? "alert" : "status"}>{apiStatus === "loading" ? (isDemoMode ? "Starting browser-local preview…" : "Connecting to local API…") : apiStatus === "ready" ? (isDemoMode ? `Browser-local preview ready · ${run ? `run ${run.status}` : "no run has been executed"}` : `Local API ready · ${run ? `run ${run.status}` : "no run has been executed"}`) : "API unavailable · run, review, and export controls are disabled"}</span></div>
-      <div className="workspace-grid"><section className="findings-panel" aria-labelledby="finding-heading"><div className="panel-heading"><p className="eyebrow">Finding</p><span className="certainty uncertain">{finding?.certainty ?? "Awaiting run"}</span></div><h2 id="finding-heading">{findingHeading}</h2><p className="finding-copy">{finding?.assessment ?? selectedCase.description}</p>{finding && <p className="small-copy">This ranks the signals in the selected interval using available records; it does not establish root cause.</p>}<div className="checks"><p className="eyebrow">Next useful checks <span className="small-copy">· suggestions only</span></p><ul className="suggested-checks">{(finding?.next_checks ?? ["Inspect trace interval for downstream errors", "Compare the adjacent baseline window"]).map((check) => <li key={check}>{check}</li>)}</ul></div><p className="quiet-note">Finding records remain linked to supporting evidence, even when the diagnosis is unresolved.</p></section>
-        <aside className={`evidence-panel ${evidenceOpen ? "open" : "closed"}`} aria-labelledby="evidence-heading"><div className="panel-heading"><p className="eyebrow">Evidence drawer</p><button className="icon-button" type="button" aria-expanded={evidenceOpen} aria-controls="evidence-content" onClick={() => setEvidenceOpen(!evidenceOpen)}>{evidenceOpen ? "Hide" : "Show"}</button></div>{evidenceOpen && <div id="evidence-content"><h2 id="evidence-heading">What supports this?</h2>{evidence.length ? evidence.map((item) => <div className="evidence-item" key={item.evidence_id}><p className="eyebrow">{evidenceLabel(item.source_type)}</p><time className="evidence-time" dateTime={item.event_time}>{readableTimestamp(item.event_time)}</time><p className="small-copy">{item.content_or_summary} {item.quality_flags.length ? `(${item.quality_flags.join(", ")})` : ""}</p><details className="technical-details"><summary>Technical record</summary><dl><div><dt>Record ID</dt><dd><code>{item.evidence_id}</code></dd></div>{item.source && <div><dt>Source</dt><dd>{item.source.source_id} · {item.source.version}</dd></div>}{item.source_event && <div><dt>Source event</dt><dd><code>{item.source_event}</code></dd></div>}{item.access_scope && <div><dt>Access</dt><dd>{item.access_scope}</dd></div>}{item.query_window && <div><dt>Selected interval</dt><dd>{readableTimestamp(item.query_window.start)} – {readableTimestamp(item.query_window.end)}</dd></div>}</dl></details></div>) : <><p className="eyebrow">Awaiting a run</p><p className="small-copy">Evidence appears here after the read-only check returns it. No supporting record is available yet.</p></>}</div>}</aside></div>
+      <div className="connection-row"><StatusMessage state={state} /><span className={`connection-note connection-${apiStatus}`} role={apiStatus === "unavailable" ? "alert" : "status"}>{apiStatus === "starting" ? (isDemoMode ? "Starting browser-local preview…" : isLiveMode ? "Starting live backend connection…" : "Connecting to local API…") : apiStatus === "ready" ? (isDemoMode ? `Browser-local preview ready · ${run ? `run ${run.status}` : "no run has been executed"}` : isLiveMode ? `Live backend ready · ${run ? `run ${run.status}` : "no run has been executed"}` : `Local API ready · ${run ? `run ${run.status}` : "no run has been executed"}`) : "Backend unavailable · run, review, and export controls are disabled"}</span></div>
+      <div className="workspace-grid"><section className="findings-panel" aria-labelledby="finding-heading"><div className="panel-heading"><p className="eyebrow">Finding</p><span className="certainty uncertain">{isLiveMode ? (workflowClaim ? workflowClaim.generation?.mode === "provider" ? "provider" : "non-provider" : state === "failed" ? "unavailable" : "Awaiting run") : finding?.certainty ?? "Awaiting run"}</span></div><h2 id="finding-heading">{findingHeading}</h2>{isLiveMode ? workflowClaim ? <><p className="finding-copy">{workflowClaim.text}</p><p className="small-copy"><strong>{generationLabel(workflowClaim)}</strong><br />Uncertainty: {workflowClaim.uncertainty}<br />Support status: {workflowClaim.support?.status ?? "not reported"}</p><div className="claim-sources"><p className="eyebrow">Cited sources and evidence</p><ul>{workflowClaim.citation_source_ids.map((sourceId) => <li key={sourceId}><code>{sourceId}</code></li>)}{workflowClaim.evidence_ids.map((evidenceId) => <li key={evidenceId}><a href={`#evidence-${evidenceId}`} onClick={() => setEvidenceOpen(true)}>Evidence {evidenceId}</a></li>)}</ul></div></> : <p className="finding-copy">{state === "failed" ? "The live workflow failed safely. No provider finding is being shown; retry the connection or run." : "Run the live check to request a grounded workflow finding."}</p> : <><p className="finding-copy">{finding?.assessment ?? selectedCase.description}</p>{finding && <p className="small-copy">This ranks the signals in the selected interval using available records; it does not establish root cause.</p>}</>}<div className="checks"><p className="eyebrow">Next useful checks <span className="small-copy">· suggestions only</span></p><ul className="suggested-checks">{(nextChecks ?? ["Inspect trace interval for downstream errors", "Compare the adjacent baseline window"]).map((check) => <li key={check}>{check}</li>)}</ul></div><p className="quiet-note">Finding records remain linked to supporting evidence, even when the diagnosis is unresolved.</p></section>
+        <aside className={`evidence-panel ${evidenceOpen ? "open" : "closed"}`} aria-labelledby="evidence-heading"><div className="panel-heading"><p className="eyebrow">Evidence drawer</p><button className="icon-button" type="button" aria-expanded={evidenceOpen} aria-controls="evidence-content" onClick={() => setEvidenceOpen(!evidenceOpen)}>{evidenceOpen ? "Hide" : "Show"}</button></div>{evidenceOpen && <div id="evidence-content"><h2 id="evidence-heading">What supports this?</h2>{evidence.length ? evidence.map((item) => <div className="evidence-item" id={`evidence-${item.evidence_id}`} key={item.evidence_id}><p className="eyebrow">{evidenceLabel(item.source_type)}</p><time className="evidence-time" dateTime={item.event_time}>{readableTimestamp(item.event_time)}</time><p className="small-copy">{item.content_or_summary} {item.quality_flags.length ? `(${item.quality_flags.join(", ")})` : ""}</p><details className="technical-details"><summary>Technical record</summary><dl><div><dt>Record ID</dt><dd><code>{item.evidence_id}</code></dd></div>{item.source && <div><dt>Source</dt><dd>{item.source.source_id} · {item.source.version}</dd></div>}{item.source_event && <div><dt>Source event</dt><dd><code>{item.source_event}</code></dd></div>}{item.access_scope && <div><dt>Access</dt><dd>{item.access_scope}</dd></div>}{item.query_window && <div><dt>Selected interval</dt><dd>{readableTimestamp(item.query_window.start)} – {readableTimestamp(item.query_window.end)}</dd></div>}</dl></details></div>) : <><p className="eyebrow">Awaiting a run</p><p className="small-copy">Evidence appears here after the read-only check returns it. No supporting record is available yet.</p></>}</div>}</aside></div>
       <details className="timeline"><summary><span><span className="eyebrow">Execution timeline</span> {timeline.length ? `${timeline.length} actual event(s)` : "No run executed"}</span><span className="timeline-meta">{timeline.length ? "read-only · inspect details" : "collapsed"}</span></summary>{timeline.length ? timeline.map((event) => <div className="timeline-detail" key={event.event_id}><code>{event.scope.operation}</code><span>{event.state}</span><span>{event.duration_ms} ms</span><span>{event.scope.read_only ? "read-only" : "scope unknown"}</span><span>{event.evidence_ids.length} evidence</span><code>params: {JSON.stringify(event.scope.parameters ?? {})}</code></div>) : <div className="timeline-detail">Run a case to record actual tool calls, parameters, evidence, retries, and failures.</div>}</details>
       <section className="review-bar" aria-label="Review actions"><button type="button" disabled={!canReview} onClick={() => void review("accept")}>Accept finding</button><button type="button" disabled={!canReview} onClick={() => void review("correct")}>Correct</button><button type="button" disabled={!canReview} onClick={() => void review("challenge")}>Challenge</button><button type="button" disabled={!canReview || !evidence.some((item) => item.source_type === "runbook" || item.source_type === "prior_knowledge")} title="Withholds retrieved knowledge sources from the next workflow context" onClick={() => void review("withhold_source")}>Withhold retrieved sources</button><button type="button" onClick={() => windowStartRef.current?.focus()}>Change window</button><button type="button" disabled={!canRun} onClick={() => void runCheck()}>Re-run</button><button className="primary" type="button" disabled={!canSave} onClick={() => void saveExport()}>Save / export</button></section>
       <details className="upload-details"><summary><span><span className="eyebrow">Optional action</span> Add your own JSONL sample</span><span className="timeline-meta">Open upload panel</span></summary><UploadPanel sessionId={sessionId} onState={setState} /></details>
-      <section id="evaluation" className="secondary-section" aria-labelledby="evaluation-heading"><p className="eyebrow">Review view</p><h2 id="evaluation-heading">Evaluation</h2><div className="secondary-grid"><div><h3>Verified in this run</h3><ul><li>{finding ? "The finding text is returned for the selected case and interval." : "No finding has been returned yet."}</li><li>{evidence.length ? `${evidence.length} evidence record(s) are available in the drawer.` : "No evidence records are available yet."}</li></ul></div><div><h3>Limitations</h3><ul><li>The available records support signal comparison; they do not establish causality.</li><li>{isDemoMode ? "This browser-local preview does not contact a live provider or connector." : "Provider capabilities are limited to what the current local API returns."}</li></ul></div></div></section>
+      <section id="evaluation" className="secondary-section" aria-labelledby="evaluation-heading"><p className="eyebrow">Review view</p><h2 id="evaluation-heading">Evaluation</h2><div className="secondary-grid"><div><h3>Verified in this run</h3><ul><li>{isLiveMode ? workflowClaim ? "The live workflow claim is returned for the selected case and interval." : "No successful live workflow claim has been returned yet." : finding ? "The authored finding text is returned for the selected case and interval." : "No finding has been returned yet."}</li><li>{evidence.length ? `${evidence.length} evidence record(s) are available in the drawer.` : "No evidence records are available yet."}</li></ul></div><div><h3>Limitations</h3><ul><li>The available records support signal comparison; they do not establish causality.</li><li>{isDemoMode ? "This browser-local preview does not contact a live provider or connector." : "Provider capabilities are limited to what the current local API returns."}</li></ul></div></div></section>
       <section id="engineering" className="secondary-section" aria-labelledby="engineering-heading"><p className="eyebrow">Implementation view</p><h2 id="engineering-heading">Engineering</h2><div className="secondary-grid"><div><h3>Verified in this surface</h3><ul><li>Case and time-window controls send their selected values to the current run adapter.</li><li>The evidence drawer and timeline render records returned by that run.</li></ul></div><div><h3>Limitations</h3><ul><li>The timeline records read-only inspection; no repair command is exposed here.</li><li>{isDemoMode ? "Demo records stay in this browser session and are not live provider data." : "This view does not make claims about provider data beyond the current local API response."}</li></ul></div></div></section>
-    </main><footer><span>{isDemoMode ? "Source and connection details are shown above" : "Phase 1 local slice · authored fixture · contracts v1"}</span><span>Responsive review widths: 1440 · 1280 · 768 · 390 CSS px</span></footer>
+    </main><footer><span>{isDemoMode ? "Source and connection details are shown above" : isLiveMode ? "Live backend workflow surface · source and generation details are shown above" : "Phase 1 local slice · authored fixture · contracts v1"}</span><span>Responsive review widths: 1440 · 1280 · 768 · 390 CSS px</span></footer>
   </div>;
 }
 

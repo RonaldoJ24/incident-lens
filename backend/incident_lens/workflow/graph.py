@@ -12,6 +12,10 @@ from typing import Any, Callable, Dict, List, Literal, Optional, TypedDict
 
 from incident_lens.api.store import iso, parse_json, utc_now
 from incident_lens.evaluation.support import evaluate_claim_support
+from incident_lens.provider import (
+    DeterministicFallbackGenerator,
+    ProviderError,
+)
 from incident_lens.retrieval import HybridRetriever, KnowledgeIndex
 from incident_lens.workflow.tools import ReadOnlyToolRegistry
 
@@ -39,6 +43,7 @@ class InvestigationState(TypedDict, total=False):
     error: Optional[str]
     report_id: Optional[str]
     budget_deadline_at: float
+    generation: Dict[str, Any]
 
 
 class WorkflowConfig:
@@ -53,13 +58,16 @@ class WorkflowBudgetExceeded(RuntimeError):
 
 
 class InvestigationWorkflow:
-    REVISION = "phase4-workflow-v1"
+    REVISION = "phase4-workflow-v2-provider"
 
-    def __init__(self, store: Any, retriever: HybridRetriever, *, config: Optional[WorkflowConfig] = None, tools: Optional[ReadOnlyToolRegistry] = None, clock: Optional[Callable[[], float]] = None) -> None:
+    def __init__(self, store: Any, retriever: HybridRetriever, *, config: Optional[WorkflowConfig] = None, tools: Optional[ReadOnlyToolRegistry] = None, answer_generator: Optional[Any] = None, clock: Optional[Callable[[], float]] = None) -> None:
         self.store = store
         self.retriever = retriever
         self.config = config or WorkflowConfig()
         self.tools = tools or ReadOnlyToolRegistry()
+        # Direct workflow users retain a deterministic, explicitly labelled
+        # local path. The API injects a configured provider when a key exists.
+        self.answer_generator = answer_generator or DeterministicFallbackGenerator()
         self.clock = clock or time.time
 
     def build_langgraph(self) -> Any:
@@ -141,6 +149,21 @@ class InvestigationWorkflow:
             self._timeline(state, "workflow_failed", {"node": state.get("node", "unknown")}, {"error": str(exc)}, utc_now(), "failed", error_code="time_budget_exceeded")
             self._checkpoint(state, "failed")
             return state
+        except ProviderError as exc:
+            state = self._latest_running_state(run_id, state)
+            state["status"] = "failed"
+            state["error"] = exc.public_message
+            self._timeline(
+                state,
+                "workflow_failed",
+                {"node": state.get("node", "unknown")},
+                {"error": exc.public_message},
+                utc_now(),
+                "failed",
+                error_code=exc.code,
+            )
+            self._checkpoint(state, "failed")
+            return state
         except Exception as exc:
             state = self._latest_running_state(run_id, state)
             state["status"] = "failed"
@@ -196,10 +219,60 @@ class InvestigationWorkflow:
         self._ensure_budget(state, "support")
         started = utc_now()
         started_clock = time.perf_counter()
-        claim = "The selected case has evidence that warrants bounded follow-up, not a causal conclusion."
-        evidence = [{"text": hit["text"], "citation": hit["citation"]} for hit in state.get("retrieval_hits", [])]
-        state["claims"] = [{"claim_id": "claim-" + hashlib.sha256(claim.encode("utf-8")).hexdigest()[:12], "text": claim, "evidence_ids": state.get("evidence_ids", []), "support": evaluate_claim_support(claim, evidence)}]
-        self._timeline(state, "evaluate_claim_support", {"claim_id": state["claims"][0]["claim_id"]}, {"status": state["claims"][0]["support"]["status"], "citations": state["claims"][0]["support"]["citations"]}, started, started_clock=started_clock)
+        try:
+            answer = self.answer_generator.generate(state["query"], state.get("retrieval_hits", []))
+        except ProviderError as exc:
+            self._timeline(
+                state,
+                "generate_grounded_answer",
+                {"query_length": len(state.get("query", "")), "passage_count": len(state.get("retrieval_hits", []))},
+                {"error": exc.public_message},
+                started,
+                "failed",
+                error_code=exc.code,
+                started_clock=started_clock,
+            )
+            raise
+        retrieved = {str(hit.get("source_id")): hit for hit in state.get("retrieval_hits", [])}
+        # Defend this boundary even if a custom generator is injected. A
+        # generated claim can only cite source IDs present in this run.
+        if any(source_id not in retrieved for source_id in answer.citation_source_ids):
+            raise ProviderError("grounded answer citation boundary failed")
+        cited_hits = [retrieved[source_id] for source_id in answer.citation_source_ids]
+        evidence = [{"text": hit.get("text", ""), "citation": hit.get("citation", "")} for hit in cited_hits]
+        cited_evidence_ids = [
+            evidence_id
+            for evidence_id, hit in zip(state.get("evidence_ids", []), state.get("retrieval_hits", []))
+            if str(hit.get("source_id")) in set(answer.citation_source_ids)
+        ]
+        claim_id = "claim-" + hashlib.sha256((answer.claim + "\n" + "\n".join(answer.citation_source_ids)).encode("utf-8")).hexdigest()[:12]
+        support = evaluate_claim_support(answer.claim, evidence)
+        support["citation_source_ids"] = list(answer.citation_source_ids)
+        state["generation"] = answer.as_dict()
+        state["claims"] = [{
+            "claim_id": claim_id,
+            "text": answer.claim,
+            "uncertainty": answer.uncertainty,
+            "next_checks": answer.next_checks,
+            "citation_source_ids": list(answer.citation_source_ids),
+            "evidence_ids": cited_evidence_ids,
+            "generation": answer.as_dict(),
+            "support": support,
+        }]
+        self._timeline(
+            state,
+            "evaluate_claim_support",
+            {"query_length": len(state.get("query", "")), "passage_count": len(state.get("retrieval_hits", []))},
+            {
+                "mode": answer.mode,
+                "provider_status": answer.provider_status,
+                "model": answer.model,
+                "citation_source_ids": list(answer.citation_source_ids),
+                "uncertainty_present": bool(answer.uncertainty),
+            },
+            started,
+            started_clock=started_clock,
+        )
         state["status"] = "running"
         state["node"] = "done"
         self._checkpoint(state, "running")

@@ -39,6 +39,9 @@ jobs:
       - name: Build authored-fixture browser demo
         env:
           VITE_INCIDENT_LENS_DEMO: "1"
+          # Replace this non-secret placeholder with the exact Render HTTPS
+          # origin before enabling ?mode=live on the public Pages build.
+          VITE_INCIDENT_LENS_API_ORIGIN: "__REPLACE_WITH_RENDER_BACKEND_ORIGIN__"
           VITE_BASE_PATH: /incident-lens/
         run: pnpm --dir frontend run build
       - uses: actions/upload-pages-artifact@v4

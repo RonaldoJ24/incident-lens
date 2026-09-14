@@ -30,6 +30,10 @@ nav a { text-decoration: none; } nav a:hover, nav a.active { color: var(--accent
 .context-bar, .findings-panel, .evidence-panel, .timeline, .review-bar { background: var(--surface); border: 1px solid var(--line); border-radius: .8rem; }
 .demo-banner { display: flex; flex-wrap: wrap; gap: .35rem 1rem; align-items: baseline; margin: 0 0 1rem; padding: .75rem 1rem; border: 1px solid #aec0ce; border-radius: .65rem; background: #e7eef3; color: #284b66; font-size: .82rem; }
 .demo-banner strong { font-size: .86rem; }
+.demo-banner a, .live-banner a { color: var(--accent-strong); font-weight: 750; }
+.live-banner { display: flex; flex-wrap: wrap; gap: .35rem 1rem; align-items: baseline; margin: 0 0 1rem; padding: .75rem 1rem; border: 1px solid #d5b67a; border-radius: .65rem; background: #fff4dc; color: #624510; font-size: .82rem; }
+.live-banner strong { font-size: .86rem; }
+.live-banner button { margin-left: auto; padding: .25rem .55rem; border: 1px solid #b88d3d; color: #624510; font-size: .78rem; font-weight: 750; }
 .context-bar { display: flex; align-items: end; justify-content: space-between; gap: 1.25rem; padding: .9rem 1.25rem; }
 .eyebrow { margin: 0 0 .45rem; color: var(--ink-muted); font-size: .72rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
 h1, h2, p { margin-top: 0; } h1 { margin-bottom: .85rem; font-size: clamp(1.35rem, 2vw, 1.7rem); letter-spacing: -.025em; } h1 span { color: var(--ink-muted); font-weight: 500; }
@@ -40,6 +44,9 @@ button { border: 0; border-radius: .45rem; background: none; color: var(--ink); 
 .connection-row { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: .8rem 0; } .connection-note { color: var(--ink-muted); font-size: .82rem; } .connection-unavailable { color: #9c3e32; font-weight: 700; }
 .upload-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; margin: 0 0 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: .8rem; } .upload-panel h2 { margin-bottom: .35rem; font-size: 1.1rem; } .upload-actions { display: flex; align-items: center; gap: .65rem; } .upload-sample { border: 1px solid var(--line); border-radius: .45rem; padding: .55rem .7rem; color: var(--accent-strong); font-size: .82rem; font-weight: 700; text-decoration: none; } .upload-input { padding: .55rem .7rem; border: 1px solid var(--line); border-radius: .45rem; background: var(--surface-muted); color: var(--accent-strong); cursor: pointer; } .upload-input input { display: block; min-height: auto; width: 12rem; padding: .25rem 0 0; border: 0; background: transparent; color: var(--ink-muted); font-size: .72rem; }
 .status-message { margin: 0; color: var(--ink-muted); font-size: .85rem; } .status-message span { color: var(--accent); } .status-failed span, .status-export-failed span { color: #9c3e32; } .status-unresolved span, .status-partial span { color: #8a5a16; }
+.claim-sources { margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.claim-sources ul { display: flex; flex-wrap: wrap; gap: .45rem .8rem; margin: 0; padding-left: 1.2rem; color: var(--ink-muted); font-size: .82rem; }
+.claim-sources a { color: var(--accent-strong); font-weight: 700; }
 .workspace-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(20rem, 1fr); gap: 1.25rem; } .findings-panel, .evidence-panel { min-height: 27rem; padding: 1.6rem; }
 .panel-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; } .certainty { border-radius: 99px; font-size: .7rem; font-weight: 800; letter-spacing: .07em; padding: .32rem .65rem; text-transform: uppercase; } .uncertain { background: #fff0cf; color: #8a5a16; }
 .finding-copy { max-width: 46rem; color: #2b3540; font-size: 1.05rem; line-height: 1.72; } .checks { border-top: 1px solid var(--line); margin-top: 2.1rem; padding-top: 1.15rem; } .suggested-checks { margin: 0; padding-left: 1.2rem; color: var(--ink-muted); } .suggested-checks li { border-bottom: 1px solid var(--line); padding: .7rem 0; }

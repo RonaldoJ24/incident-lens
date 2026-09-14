@@ -31,7 +31,7 @@ attribution, redistribution, and derived-artifact terms before data is reused.
 | 1 | React/FastAPI slice, SQLite fallback, PostgreSQL store/migrations, API flow tests, and PostgreSQL 16 CI run `34819200466` | Complete | Local Docker is unavailable; the required PostgreSQL path is verified in CI |
 | 2 | Pinned per-case adapter, portable/Spark normalization, isolation checks, reviewed real-case report, and Spark CI run `34813930327` | Complete | Raw telemetry and protected locators remain outside Git by design |
 | 3 | Real grouped train/validation rows, rules/Isolation Forest comparison, artifact verification, and sealed final-test policy | Correct feature semantics and per-run operational metrics before model selection | Audit found unsupported latency naming and globally aggregated/non-operational metrics; current report is provisional and final held-out remains sealed |
-| 4 | Local TF-IDF/LSA retrieval, citations, typed compiled LangGraph, durable checkpoints, review, recovery, and hostile-input tests | Select and evaluate a real model/provider and substantive retrieval corpus | Current retrieval corpus/evaluation is too small and the fixed claim path is not a grounded generative provider |
+| 4 | Local TF-IDF/LSA retrieval, citations, typed compiled LangGraph, durable checkpoints, review, recovery, hostile-input tests, bounded provider seam, and expanded reviewed corpus | Root-level live provider verification and grounded claim review over the configured model | Provider path has mocked tests only; no live provider or production claim is made |
 | 5 | Bounded guest upload flow plus fixed-path, metadata-only live verification of the owned `cadencia-ai` GitHub Actions feed | Keep live connector scope explicit; pilot outreach requires authorization | Connector evidence is CI metadata, not application incident telemetry; pilot protocol is unrun |
 | 6 | Reproducible release checks, container/CI contract, runbooks, threat/model cards, controlled workload, four-width browser-local visual review, and green release matrix run `34821311229` | Preserve the public preview boundary and verify any future full backend hosting; the static Pages preview is available at [ronaldoj24.github.io/incident-lens](https://ronaldoj24.github.io/incident-lens/) | Final held-out stays sealed; provider cost/hosted latency and full browser/API integration are not measured |
 | 7 | Static authored-fixture preview and Pages workflow implemented; final UI deploy run `34821311324` verified at [ronaldoj24.github.io/incident-lens](https://ronaldoj24.github.io/incident-lens/) | Keep the README and preview explicit about browser-local authored-fixture behavior | Static preview is not the FastAPI/PostgreSQL/provider-backed application |
@@ -278,9 +278,10 @@ Next gate: correct feature semantics and per-run ranking/false-alarm evaluation,
 
 **Status:** In progress — local deterministic retrieval, typed LangGraph
 workflow, evidence support evaluation, hostile-log handling, source
-withholding, checkpoint/restart/cancel/retry, and idempotent reports are
-implemented and locally tested. PostgreSQL runtime is verified in CI, while a
-real model/provider and substantive retrieval evaluation remain unimplemented.
+withholding, checkpoint/restart/cancel/retry, idempotent reports, a bounded
+provider-neutral OpenAI-compatible seam, and an expanded reviewed retrieval
+corpus are implemented and locally tested. PostgreSQL runtime is verified in
+CI, while live provider verification and claim-quality review remain pending.
 
 **Dependencies:** Phase 1 workflow state and Phase 2 source/version metadata;
 Phase 3 ranking output for a complete comparison.
@@ -314,11 +315,11 @@ Phase 3 ranking output for a complete comparison.
 
 Evidence record 2026-09-14
 Status: in progress
-Changed paths: `backend/incident_lens/retrieval/`, `backend/incident_lens/evaluation/`, `backend/incident_lens/workflow/`, `backend/incident_lens/api/`, `backend/tests/test_phase4_workflow.py`, `backend/migrations/003_workflow_checkpoints.sql`, `data/knowledge/verified-runbooks-v1.json`, `data/manifests/retrieval.json`, `backend/incident_lens/fixtures/hostile_logs.json`, `docs/evaluation/phase4-retrieval-report.json`, `docs/evaluation/phase4-workflow-evidence.md`, `frontend/src/App.tsx`, `contracts/v1/api.openapi.json`
-Acceptance evidence: the normal run and checkpoint-resume paths invoke a compiled LangGraph with typed state; each successful node persists the correct next-node checkpoint before advancing, and a persisted time budget is checked before every node and on resume, recording bounded failure when exhausted; the small manual path is limited to cancellation/partial-stop control; allowlisted read-only fixture inspection, bounded retries and measured timeline durations are recorded; retrieval hits and generated claims carry source/version citations and support status; source withholding changes retrieval context; duplicate completed delivery reuses one report revision; hostile log content remains data and arbitrary shell/SQL is rejected
-Checks: `uv run --project backend python -m unittest discover -s backend/tests -v` — 62 passed, 3 PostgreSQL tests skipped because `INCIDENT_LENS_DATABASE_URL` is unset; `pnpm --dir frontend run lint && pnpm --dir frontend run typecheck && pnpm --dir frontend test && pnpm --dir frontend run build` — pass; `uv run --project backend python -m incident_lens.validation.manifests data/manifests` — pass (6); `uv run --project backend python -m incident_lens.pipeline.check_leakage data/manifests` — pass; `uv run --project backend python -m incident_lens.validation.local README.md docs backend contracts data .env.example frontend/src` — pass; `uv run --project backend python -m compileall -q backend/incident_lens` — pass; `uv lock --project backend --check` — pass; `git diff --check` — pass
-Known limitations/blockers: retrieval uses a three-document local corpus and a trivial Recall@3 check; the fixed claim scaffold is not a grounded generative provider; browser evidence covers the authored static preview rather than the full API path
-Next gate: select an available provider/model, ground generated claims over a substantive verified corpus, and evaluate retrieval and claim support separately
+Changed paths: `backend/incident_lens/provider/`, `backend/incident_lens/config.py`, `backend/incident_lens/workflow/graph.py`, `backend/incident_lens/api/app.py`, `backend/incident_lens/retrieval/`, `backend/incident_lens/evaluation/retrieval.py`, `backend/tests/test_phase4_provider.py`, `backend/tests/test_phase4_workflow.py`, `data/knowledge/verified-runbooks-v1.json`, `data/manifests/knowledge-sources.json`, `data/manifests/retrieval.json`, `.env.example`, `docs/CONFIGURATION.md`, `docs/evaluation/phase4-retrieval-report.json`, `docs/evaluation/phase4-workflow-evidence.md`, `README.md`
+Acceptance evidence: the API injects a provider-neutral OpenAI-compatible generator when a key is configured and otherwise uses a clearly labelled deterministic non-provider fallback; prompts and outputs are bounded, retries/timeouts/call caps are explicit, structured claims require explicit uncertainty and retrieved source IDs, and provider failures never substitute an authored replay. Unknown citations, malformed/truncated JSON, timeout, provider-error, no-key, forbidden-tool, and secret-boundary paths have mocked tests. The reviewed index contains 14 concise paraphrased summaries and the manifest contains 15 queries with decoys; local retrieval reports Recall@1 1.0, Recall@3 1.0, and MRR 1.0. Existing compiled workflow checkpoint/recovery, withholding, cancellation, review, and hostile-input evidence remains covered.
+Checks: `PYTHONPATH=backend backend/.venv/bin/python -m unittest backend.tests.test_phase4_provider backend.tests.test_phase4_workflow -v` — pass (16 tests); `PYTHONPATH=backend backend/.venv/bin/python -m unittest discover -s backend/tests -v` — pass (77 tests, 3 PostgreSQL tests skipped because `INCIDENT_LENS_DATABASE_URL` is unset); `PYTHONPATH=backend backend/.venv/bin/python -m incident_lens.validation.manifests data/manifests` — pass; `PYTHONPATH=backend backend/.venv/bin/python -m compileall -q backend/incident_lens` — pass; `git diff --check` — pass
+Known limitations/blockers: live provider verification, provider cost/latency, and claim-quality review remain unrun; the local retrieval metrics are not production or incident-diagnosis quality measures; browser evidence covers the authored static preview rather than the full API path
+Next gate: root-level live provider test with an explicitly authorized key, then separate claim-support evaluation and review of safe provider failures before any Phase 4 completion decision
 
 ## Phase 5 — Guest testing, uploads, and owned live connector
 
@@ -507,8 +508,9 @@ fixture `fixture-v1`; connector evidence remains the metadata-only
 `github-actions:RonaldoJ24/cadencia-ai` / `github-actions-v3` record
 Known limitations/blockers: the Pages URL is not hosted FastAPI/PostgreSQL,
 provider, or connector infrastructure; Phase 3 semantic audit remains
-blocked, Phase 4 has no real model/provider and only a three-document corpus,
-the pilot is unrun, and no repair claim is made
+blocked, Phase 4 live provider verification and claim-quality review remain
+pending despite the bounded provider seam and 14-document local corpus, the
+pilot is unrun, and no repair claim is made
 Next gate: keep the public presentation aligned with verified behavior; only
 mark this phase complete after the README acceptance checks and review of the
 remaining blockers, without marking the overall project complete
@@ -522,7 +524,7 @@ not hosted FastAPI/API/PostgreSQL/provider infrastructure. The owned-app
 connector is also verified, but only as a bounded metadata-only GitHub Actions
 call against `RonaldoJ24/cadencia-ai`, as recorded in
 `docs/evaluation/phase5-live-connector.md`; it is not application incident
-telemetry. Remaining blockers are the Phase 3 semantic metrics audit, selection
-of a real provider and substantive retrieval corpus for Phase 4, public
+telemetry. Remaining blockers are the Phase 3 semantic metrics audit, live
+verification and claim-quality review for the Phase 4 provider seam, public
 backend/API/PostgreSQL hosting, and the unrun pilot. These blockers do not
 mark the overall project complete and do not support a repair claim.

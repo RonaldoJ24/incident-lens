@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: incident-lens-api
+    runtime: python
+    region: ohio
+    plan: free
+    rootDir: .
+    buildCommand: pip install uv && uv sync --project backend --frozen --no-dev
+    startCommand: sh deploy/render-start.sh
+    healthCheckPath: /health/ready
+    envVars:
+      - key: INCIDENT_LENS_ENV
+        value: render
+      - key: INCIDENT_LENS_CORS_ALLOWED_ORIGINS
+        value: https://ronaldoj24.github.io
+      - key: INCIDENT_LENS_PROVIDER_BASE_URL
+        value: https://api.deepseek.com
+      - key: INCIDENT_LENS_PROVIDER_MODEL
+        value: deepseek-flash
+      - key: INCIDENT_LENS_PROVIDER_TIMEOUT_SECONDS
+        value: "8"
+      - key: INCIDENT_LENS_PROVIDER_MAX_INPUT_TOKENS
+        value: "1400"
+      - key: INCIDENT_LENS_PROVIDER_MAX_CONTEXT_TOKENS
+        value: "1000"
+      - key: INCIDENT_LENS_PROVIDER_MAX_OUTPUT_TOKENS
+        value: "320"
+      - key: INCIDENT_LENS_PROVIDER_MAX_RETRIES
+        value: "1"
+      - key: INCIDENT_LENS_PROVIDER_MAX_CALLS_PER_PROCESS
+        value: "32"
+      - key: INCIDENT_LENS_PROVIDER_DISABLE_THINKING
+        value: "true"
