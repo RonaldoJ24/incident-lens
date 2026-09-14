@@ -4,13 +4,13 @@
 
 **Understand what failed, see the evidence, and continue the investigation.**
 
-> **Status: Phase 1 local slice and Phase 2 source work in progress.** The
+> **Status: Phase 1 local slice in progress; Phase 2 source work complete.** The
 > repository contains a runnable React/TypeScript and FastAPI/Pydantic slice
 > over a small authored SQLite fixture, plus a pinned, leakage-safe RCAEval
 > per-case adapter and deterministic offline normalization. PostgreSQL
 > persistence implementation and runtime verification remain pending; the
-> migration is a contract artifact only. Spark CI, deployment, live connectors,
-> and benchmark evaluation remain unverified.
+> migration is a contract artifact only. Spark parity/isolation is verified in
+> CI; deployment, live connectors, and benchmark evaluation remain unverified.
 
 Incident Lens is a focused investigation workspace for the period after a
 checkout failure. An engineer selects a service and time window, reviews logs,
