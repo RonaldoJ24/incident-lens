@@ -26,8 +26,11 @@ timezone-naive or malformed timestamps, duplicate events in strict mode, and
 cases outside the requested split. Epoch seconds, milliseconds, microseconds,
 and nanoseconds are distinguished; canonical timestamps retain nanoseconds so
 sub-second events cannot be falsely deduplicated. The optional Spark job uses
-the same canonical event function and emits the same quality summary. The API
-does not import Spark or require Java.
+the same canonical event function and emits the same quality summary, including
+for an existing zero-row signal file. `generated_at` records the actual run
+time and is excluded from the deterministic content hash; identical telemetry
+still produces the same content identity and quality report. The API does not
+import Spark or require Java.
 
 The reviewed one-case quality record is
 [`rcaeval-re2ob-001-quality.json`](rcaeval-re2ob-001-quality.json). It reports
@@ -58,11 +61,16 @@ PYTHONPATH=backend python3 -m incident_lens.pipeline.check_leakage data/manifest
 git diff --check
 ```
 
-The PySpark runtime path is intentionally CI-only on hosts without Java:
-install the backend `data` and `spark` extras in a runner, then invoke
+The PySpark runtime path is CI-only on hosts without Java: install the backend
+`data` and `spark` extras in a runner, then invoke
 `incident_lens.pipeline.spark_normalize.run_spark_normalization` with a private
 neutral-ID raw directory. `.github/workflows/phase2-offline.yml` compares its
-summary and manifest hash with portable normalization on sub-second authored
-rows and asserts leakage rejection. PostgreSQL artifact migration execution
-and the CI workflow remain unverified until run; Phase 1 PostgreSQL persistence
-implementation and runtime verification are also pending.
+summary and content hash with portable normalization on sub-second and empty
+authored signals and asserts leakage rejection. GitHub Actions run
+`34813930327` passed these checks at commit `72c3434`.
+
+The exact Spark signal hash uses one `collect_list` aggregation over a single
+case. That is verified for this bounded per-case workload, not evidence of an
+unbounded or distributed-scale hashing design. PostgreSQL artifact migration
+execution and Phase 1 PostgreSQL persistence verification are tracked
+separately.
