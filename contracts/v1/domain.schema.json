@@ -152,7 +152,7 @@
     },
     "TimelineEvent": {
       "type": "object",
-      "required": ["event_id", "run_id", "step", "state", "started_at", "ended_at", "scope", "evidence_ids"],
+      "required": ["event_id", "run_id", "step", "state", "started_at", "ended_at", "scope", "evidence_ids", "duration_ms"],
       "properties": {
         "event_id": { "type": "string", "pattern": "^timeline-[a-z0-9-]+$" },
         "run_id": { "type": "string", "minLength": 1 },
@@ -160,8 +160,9 @@
         "state": { "enum": ["queued", "running", "succeeded", "partial", "failed", "cancelled"] },
         "started_at": { "type": "string", "format": "date-time" },
         "ended_at": { "type": ["string", "null"], "format": "date-time" },
-        "scope": { "type": "object", "required": ["operation", "read_only"], "properties": { "operation": { "type": "string" }, "read_only": { "const": true } }, "additionalProperties": false },
+        "scope": { "type": "object", "required": ["operation", "read_only"], "properties": { "operation": { "type": "string" }, "read_only": { "const": true }, "parameters": { "type": "object" } }, "additionalProperties": false },
         "evidence_ids": { "type": "array", "items": { "type": "string" } },
+        "duration_ms": { "type": "integer", "minimum": 0 },
         "error_code": { "type": ["string", "null"] }
       },
       "additionalProperties": false

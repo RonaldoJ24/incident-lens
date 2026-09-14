@@ -1,6 +1,7 @@
 # Incident Lens implementation plan
 
-**Overall status:** foundation/planning only. No application phase is complete.
+**Overall status:** Phase 0 complete; Phase 1 local slice in progress. No
+application phase is complete.
 
 This plan is the source of truth for phase status and acceptance evidence. A
 phase may begin when its dependencies are met, but it is not complete until
@@ -10,10 +11,9 @@ them.
 
 ## Planning handoff
 
-**Planning review:** complete on 2026-09-13. **Application delivery:** not
-started. The product contract, eight-stage sequence, dependencies, acceptance
-gates, and open decisions are ready for implementation. Completing this review
-does not complete Phase 0 or prove any application behavior.
+**Planning review:** complete on 2026-09-13. **Application delivery:** Phase 1
+local slice in progress. The product contract, eight-stage sequence,
+dependencies, acceptance gates, and open decisions remain the source of truth.
 
 The cited RCAEval project and dataset pages were checked during this review and
 support the planned 735-case total, the 90-case multi-source RE2-OB subset, and
@@ -25,7 +25,7 @@ attribution, redistribution, and derived-artifact terms before data is reused.
 | Phase | Current evidence | Next gate | Known decision or blocker |
 | --- | --- | --- | --- |
 | 0 | Scaffold, v1 contracts, rendered wireframe, audited manifests, and focused validation pass (evidence record below) | Phase 1 runnable vertical slice | No external blocker; per-case telemetry fetch and final development selection remain Phase 2 evidence-led work |
-| 1 | None | Phase 0 contracts and design accepted | Blocked by Phase 0; actual build and test commands must be established from the scaffold |
+| 1 | Local SQLite API, authored fixture worker, React Investigate shell, migration, API flow tests, and four-width browser review (evidence record below) | PostgreSQL runtime verification | Docker and PostgreSQL are unavailable on this host; migration runtime remains unverified |
 | 2 | None | Persistent state plus audited source manifests | Blocked by Phases 0–1; object-storage implementation and exact upstream revisions remain open |
 | 3 | None | Quality-reviewed, leakage-safe train/validation manifests | Blocked by Phase 2; method and thresholds remain evidence-led decisions |
 | 4 | None | Persistent workflow state, source metadata, and ranking output | Blocked by Phases 1–3; embedding/model provider remains unselected pending availability and evaluation |
@@ -123,7 +123,9 @@ Next gate: Phase 1 runnable vertical slice with persistent state and actual brow
 
 ## Phase 1 — Runnable vertical slice
 
-**Status:** Not started.
+**Status:** In progress — local SQLite API, authored fixture worker, React
+shell, migration, focused flow tests, and browser review are implemented.
+PostgreSQL runtime verification remains pending.
 
 **Dependencies:** Phase 0 contracts and design decisions.
 
@@ -157,6 +159,15 @@ Next gate: Phase 1 runnable vertical slice with persistent state and actual brow
 - `pnpm --dir frontend test`
 - `uv run --project backend pytest -m integration`
 - `pnpm --dir frontend e2e -- --width=1440`
+
+Evidence record 2026-09-13
+Status: in progress
+Changed paths: `backend/incident_lens/api/`, `backend/incident_lens/worker/`, `backend/incident_lens/fixtures/`, `backend/migrations/`, `backend/tests/test_api.py`, `frontend/src/`, `frontend/vite.config.mjs`, `docs/LOCAL_DEVELOPMENT.md`, `README.md`
+Acceptance evidence: local API flow in `backend/tests/test_api.py` covers session creation, three distinct case outcomes, UTC window preservation, evidence/findings/single-event timeline retrieval, guest isolation, cancellation, retry attempt, review history, reload from SQLite, idempotent report save, and downloadable JSON export; migration at `backend/migrations/001_initial.sql`; authored fixture and source boundary at `backend/incident_lens/fixtures/cases.json`; local run instructions at `docs/LOCAL_DEVELOPMENT.md`; local browser review exercised all three cases at 1440/1280/768/390 CSS pixels with no horizontal overflow, visible 3 px keyboard focus, explicit no-run state, and truthful unavailable actions
+Checks: `uv run --project backend python -m unittest discover -s backend/tests -v` — pass (14 tests); `pnpm --dir frontend run lint` — pass; `pnpm --dir frontend run typecheck` — pass; `pnpm --dir frontend test` — pass; `pnpm --dir frontend run build` — pass; `uv run --project backend python -m incident_lens.validation.local README.md docs backend contracts data .env.example frontend/src` — pass; `git diff --check` — pass
+Fixture/source versions: authored synthetic controlled fixture `fixture-v1`; FastAPI `0.141.1`; Pydantic `2.13.5`; SQLite local store; PostgreSQL migration `001_initial.sql`
+Known limitations/blockers: Docker and PostgreSQL are unavailable on this host, so PostgreSQL runtime/migration verification is pending; browser review was interactive and no screenshots are checked in yet; request-triggered FastAPI BackgroundTasks are bounded but durable queue/restart behavior remains Phase 4 work; fixture is not RCAEval or live telemetry
+Next gate: verify the PostgreSQL migration/runtime path; Phase 2 source-adapter work can proceed independently against the persistent local contract
 
 ## Phase 2 — Real source adapters and data isolation
 

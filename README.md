@@ -4,10 +4,11 @@
 
 **Understand what failed, see the evidence, and continue the investigation.**
 
-> **Status: Phase 0 foundation complete.** The repository contains a minimal
-> React/TypeScript and Python contract-first scaffold, audited selection
-> manifests, and a rendered investigation wireframe. The runnable application,
-> persistence, live adapters, and evaluation remain future phases.
+> **Status: Phase 1 local slice in progress.** The repository contains a
+> runnable React/TypeScript and FastAPI/Pydantic slice over a small authored
+> SQLite fixture, plus the Phase 0 contracts and audit artifacts. The local UI
+> has been reviewed at its four target widths; PostgreSQL, deployment, live
+> adapters, and evaluation remain unverified future work.
 
 Incident Lens is a focused investigation workspace for the period after a
 checkout failure. An engineer selects a service and time window, reviews logs,
@@ -75,7 +76,12 @@ are documented in [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md). The exact
 foundation checks and their results are recorded in the Phase 0 evidence record
 in the implementation plan.
 
-There is no working demo URL, screenshot set, API quickstart, measured result,
-deployment, or live connector to report yet. Public deployment and the owned
-connector are completion requirements in the plan, not promises represented as
-existing features.
+The local Phase 1 commands, authored-fixture boundary, API flow, and pending
+PostgreSQL/browser checks are documented in
+[`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
+
+There is no working demo URL, public screenshot set, measured result,
+deployment, or live connector to report yet. The local API quickstart is for
+the authored fixture only. Public deployment and the owned connector are
+completion requirements in the plan, not promises represented as existing
+features.

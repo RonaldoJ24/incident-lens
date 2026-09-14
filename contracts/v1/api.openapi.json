@@ -16,7 +16,7 @@
     "/v1/runs/{runId}/review": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "post": { "operationId": "reviewFinding", "description": "Accept, correct, challenge, or withhold a source while preserving run context.", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "domain.schema.json#/$defs/Correction" } } } }, "responses": { "202": { "description": "Bounded follow-up review queued" } } } },
     "/v1/uploads": { "post": { "operationId": "validateUpload", "responses": { "200": { "description": "Bounded JSONL validation result" } } } },
     "/v1/reports": { "post": { "operationId": "saveReportRevision", "responses": { "201": { "description": "Immutable report revision" } } } },
-    "/v1/reports/{reportId}/export": { "parameters": [{ "$ref": "#/components/parameters/ReportId" }], "post": { "operationId": "exportReport", "responses": { "200": { "description": "Report export metadata with provenance" } } } }
+    "/v1/reports/{reportId}/export": { "parameters": [{ "$ref": "#/components/parameters/ReportId" }], "post": { "operationId": "exportReport", "responses": { "200": { "description": "Downloadable JSON report containing report metadata, provenance, findings, evidence, and timeline" } } } }
   },
   "components": {
     "parameters": {

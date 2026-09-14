@@ -22,7 +22,7 @@ _ENTITIES = {
     "evidence": ("evidence_id", "source_type", "source", "event_time", "query_window", "content_or_summary", "quality_flags", "access_scope"),
     "run": ("run_id", "session_id", "case_id", "status", "provenance"),
     "finding": ("finding_id", "run_id", "assessment", "certainty", "evidence_ids", "next_checks"),
-    "timeline_event": ("event_id", "run_id", "step", "state", "started_at", "ended_at", "scope", "evidence_ids"),
+    "timeline_event": ("event_id", "run_id", "step", "state", "started_at", "ended_at", "scope", "evidence_ids", "duration_ms"),
     "correction": ("correction_id", "run_id", "action", "created_at", "context_preserved"),
     "report": ("report_id", "session_id", "run_id", "revision", "provenance", "finding_ids", "saved_at", "repair_claim"),
     "upload": ("upload_id", "session_id", "content_type", "byte_size", "validation", "telemetry_origin"),
@@ -125,6 +125,8 @@ def validate_document(document: Dict[str, Any]) -> Dict[str, Any]:
             _timestamp(payload["ended_at"], "ended_at")
         if payload["scope"].get("read_only") is not True:
             raise ContractError("timeline scope must be read_only")
+        if not isinstance(payload["duration_ms"], int) or payload["duration_ms"] < 0:
+            raise ContractError("timeline duration_ms must be a non-negative integer")
     elif entity == "correction":
         _timestamp(payload["created_at"], "created_at")
         if payload["context_preserved"] is not True:

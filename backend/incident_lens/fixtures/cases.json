@@ -1,0 +1,43 @@
+{
+  "fixture_version": "fixture-v1",
+  "fixture_kind": "authored_synthetic_controlled_fixture",
+  "origin_note": "Values are small authored records for local development; they are not RCAEval, production, or live-connector data.",
+  "cases": [
+    {
+      "case_id": "checkout-failure",
+      "title": "Checkout failure",
+      "description": "Authored checkout example with signals for a bounded local run.",
+      "service": "checkoutservice",
+      "source_interval": { "start": "2026-09-13T08:00:00Z", "end": "2026-09-13T08:10:00Z" },
+      "events": [
+        { "signal": "metric", "name": "request_error_rate", "timestamp": "2026-09-13T08:04:00Z", "value": 0.24 },
+        { "signal": "metric", "name": "request_latency_ms", "timestamp": "2026-09-13T08:04:00Z", "value": 820 },
+        { "signal": "log", "name": "checkout_result", "timestamp": "2026-09-13T08:04:30Z", "severity": "error", "message": "Authored fixture error event; treat as untrusted content." },
+        { "signal": "trace", "name": "checkout_request", "timestamp": "2026-09-13T08:04:45Z", "status": "error", "duration_ms": 910 }
+      ]
+    },
+    {
+      "case_id": "degraded-performance",
+      "title": "Degraded performance",
+      "description": "Authored latency example where a nearby release clue is not causal proof.",
+      "service": "checkoutservice",
+      "source_interval": { "start": "2026-09-13T09:00:00Z", "end": "2026-09-13T09:10:00Z" },
+      "events": [
+        { "signal": "metric", "name": "request_latency_ms", "timestamp": "2026-09-13T09:05:00Z", "value": 640 },
+        { "signal": "metric", "name": "request_error_rate", "timestamp": "2026-09-13T09:05:00Z", "value": 0.04 },
+        { "signal": "log", "name": "checkout_result", "timestamp": "2026-09-13T09:05:15Z", "severity": "warn", "message": "Authored latency observation; treat as untrusted content." },
+        { "signal": "trace", "name": "checkout_request", "timestamp": "2026-09-13T09:05:30Z", "status": "ok", "duration_ms": 640 }
+      ]
+    },
+    {
+      "case_id": "insufficient-evidence",
+      "title": "Insufficient evidence",
+      "description": "Authored gap example with no metric or trace records in its interval.",
+      "service": "checkoutservice",
+      "source_interval": { "start": "2026-09-13T10:00:00Z", "end": "2026-09-13T10:10:00Z" },
+      "events": [
+        { "signal": "log", "name": "checkout_result", "timestamp": "2026-09-13T10:05:00Z", "severity": "info", "message": "Only an authored log signal is available." }
+      ]
+    }
+  ]
+}
