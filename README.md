@@ -7,25 +7,30 @@ and save/export a report without claiming that a system was repaired.
 
 ## Public preview
 
-**[Open the live preview](https://ronaldoj24.github.io/incident-lens/)**
+**[Open the instant authored preview](https://ronaldoj24.github.io/incident-lens/)**
 
-This URL is a static GitHub Pages build of the authored-fixture browser demo.
-It runs the demo adapter in the browser and makes the boundary visible: the
+**[Open the live provider-backed path](https://ronaldoj24.github.io/incident-lens/?mode=live)**
+
+The default URL is a static GitHub Pages build of the authored-fixture browser
+demo. It runs the demo adapter in the browser and makes the boundary visible: the
 FastAPI/PostgreSQL backend, model provider, live connector, and repair actions
 are not running at that URL.
 
-The Pages build remains this instant demo by default. An explicitly selected
-`?mode=live` URL uses the build-time `VITE_INCIDENT_LENS_API_ORIGIN` absolute
-HTTPS backend origin, never the demo adapter, and shows whether the backend is
-starting, ready, or unavailable. Render Free may sleep, so its first wake can
-take about one minute; the checked-in Pages workflow keeps a non-secret origin
-placeholder until the backend URL is externally verified.
+The Pages build remains this instant demo by default. The explicit
+[`?mode=live`](https://ronaldoj24.github.io/incident-lens/?mode=live) path uses
+the deployed FastAPI service, Neon PostgreSQL, and a bounded DeepSeek request;
+it never falls back to the browser demo adapter. It shows whether the backend
+is starting, ready, or unavailable. Render Free may sleep after inactivity, so
+the first wake can take about one minute. The telemetry is still an authored
+controlled fixture, not a production incident feed, and a generated finding
+is not evidence that a system was repaired.
 
 Verified delivery evidence:
 
 | Surface | Evidence |
 | --- | --- |
-| Public preview | [Final UI deploy run `34821311324`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34821311324) passed; [live URL](https://ronaldoj24.github.io/incident-lens/) resolves to the browser-local preview |
+| Public preview | [Final UI deploy run `34821311324`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34821311324) passed; [default URL](https://ronaldoj24.github.io/incident-lens/) resolves to the browser-local preview |
+| Live application | [Live Pages path](https://ronaldoj24.github.io/incident-lens/?mode=live) calls the [Render readiness endpoint](https://incident-lens-api.onrender.com/health/ready); the dated smoke result is recorded in [`docs/evaluation/phase6-live-deployment.md`](docs/evaluation/phase6-live-deployment.md) |
 | Release matrix | [Final run `34821311229`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34821311229) passed the backend/PostgreSQL, frontend, and container jobs |
 | PostgreSQL persistence | [Phase 1 run `34819200466`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34819200466) passed the PostgreSQL integration path |
 | Owned connector | The bounded metadata-only verification is recorded in [`docs/evaluation/phase5-live-connector.md`](docs/evaluation/phase5-live-connector.md) |
@@ -63,6 +68,10 @@ authored preview session. It is not a hosted incident service.
 - **Investigation workflow:** a compiled, typed LangGraph workflow with
   bounded read-only tools, retrieval citations, checkpoints, restart,
   cancellation/retry, source withholding, and idempotent report revisions.
+- **Hosted opt-in path:** GitHub Pages calls a Render Free FastAPI service in
+  Ohio. The service uses pooled Neon PostgreSQL for runtime state, a direct
+  connection only for startup migrations, and a bounded OpenAI-compatible
+  provider seam currently configured for DeepSeek.
 - **Guest uploads and integration:** strict bounded JSONL validation and an
   exact-host/fixed-path connector that returns metadata and a digest, never the
   connected payload. The verified owned-app call is GitHub Actions metadata,
@@ -183,29 +192,31 @@ The evidence trail is split by data boundary:
 
 ## Deployment
 
-[`deploy/`](deploy) contains a provider-neutral release compose contract and
-the migration, readiness, metrics, secret, and rollback runbook. It expects an
-immutable API image and a managed PostgreSQL URL supplied by a deployment
-secret manager. No backend deployment, provider, ingress, or public API URL is
-claimed. The only verified public deployment is the static authored-fixture
-Pages preview described above.
+[`deploy/`](deploy) contains the provider-neutral release compose contract and
+the Render Free start path, plus migration, readiness, metrics, secret, and
+rollback notes. The verified public API is
+[`https://incident-lens-api.onrender.com`](https://incident-lens-api.onrender.com/health/ready),
+backed by Neon PostgreSQL and a bounded DeepSeek configuration. Credentials are
+external secret files and are absent from Git, Pages, command arguments, and
+application output.
 
 ## Important limitations
 
-> The public Pages URL is a browser-local authored-fixture preview. It is not
-> the FastAPI/PostgreSQL application and does not connect to a model provider,
-> the owned connector, or a repair system.
+> The default Pages URL is a browser-local authored-fixture preview. Only the
+> explicit `?mode=live` path calls the hosted FastAPI/PostgreSQL/provider stack.
+> Neither path connects to live incident telemetry or a repair system.
 
 - **Phase 3 is blocked:** the semantic audit found unsupported latency naming
   and globally aggregated/non-operational metrics. The resulting comparison is
   provisional; no model or threshold selection is accepted, and the final
   held-out split remains sealed.
-- **Phase 4 remains deliberately unverified live:** the repository now includes
-  a bounded provider-neutral OpenAI-compatible runtime seam and a labelled
-  deterministic no-key fallback. The reviewed local corpus has 14 concise
-  summaries and 15 public-demo retrieval queries (Recall@1/Recall@3/MRR are
-  local-corpus measurements only). No live provider call or production-quality
-  generative investigation result is claimed.
+- **Phase 4 remains conditional on Phase 3:** the bounded provider-neutral
+  runtime is live and the reviewed corpus has 14 concise summaries and 15
+  public-demo queries. One hosted smoke claim cited three retrieved sources,
+  included explicit uncertainty and four next checks, and received an
+  `uncertain` lexical support result. That is integration evidence, not a
+  production-quality or complete-investigation score. Recall@1/Recall@3/MRR
+  remain small local-corpus measurements only.
 - **Connector scope is metadata-only:** the owned verification proves one
   bounded GitHub Actions metadata call, not application telemetry, diagnosis,
   recovery, or broader coverage.
@@ -214,8 +225,9 @@ Pages preview described above.
 - **No repair claims:** tools are read-only, findings can be uncertain or
   conflicting, and saved reports keep `repair_claim: false`.
 - Local workload timings are regression measurements for the authored fixture,
-  not hosted or operational latency claims. Provider cost, hosted latency,
-  live-connector latency, and complete-investigation quality are not measured.
+  not hosted or operational latency claims. Provider cost, representative
+  hosted latency, live-connector latency, and complete-investigation quality
+  are not measured.
 
 ## Attribution and original contribution
 

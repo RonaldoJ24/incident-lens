@@ -1,14 +1,24 @@
 # Release and operations runbook
 
-**Scope:** reproducible local and provider-neutral release operations for
-Incident Lens. **Status:** no external deployment or public URL has been
-verified.
+**Scope:** reproducible local and hosted release operations for Incident Lens.
+**Status:** the Render Free/Neon/DeepSeek path is deployed and smoke-verified;
+the provider-neutral compose contract remains available for other targets.
 
 The checked-in frontend remains an instant authored-fixture Pages demo by
 default. A live opt-in uses `?mode=live` and a build-time absolute HTTPS
 `VITE_INCIDENT_LENS_API_ORIGIN`; it does not replay the browser fixture. The
 API must allow only the exact Pages origin (plus explicitly required local
 origins) through `INCIDENT_LENS_CORS_ALLOWED_ORIGINS`, with no credentials.
+
+The verified endpoints are:
+
+- Pages default: <https://ronaldoj24.github.io/incident-lens/>
+- Pages live opt-in: <https://ronaldoj24.github.io/incident-lens/?mode=live>
+- Render readiness: <https://incident-lens-api.onrender.com/health/ready>
+
+Render Free may sleep after inactivity. Treat an initial delay of about one
+minute as a cold start, retry readiness, and show the starting/unavailable
+state rather than substituting a cached or authored provider answer.
 
 ## Pre-release gate
 
@@ -89,4 +99,7 @@ flow demonstrates wiring only; it is not live telemetry or a repair claim.
    reopening traffic. Record the failed image, migration versions, snapshot
    identifier, and recovery result in the external release log.
 
-No deployment, rollback, provider, or public URL is claimed by this document.
+The 2026-09-14 deployment and smoke evidence is recorded in
+[`docs/evaluation/phase6-live-deployment.md`](evaluation/phase6-live-deployment.md).
+No rollback exercise, production telemetry, representative hosted latency, or
+repair is claimed by this document.

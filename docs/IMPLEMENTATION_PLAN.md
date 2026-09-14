@@ -1,8 +1,10 @@
 # Incident Lens implementation plan
 
 **Overall status:** Phases 0–2 complete. Phase 3 is blocked at its semantic
-audit gate, Phase 4 is in progress, Phase 5 has a verified bounded owned-app
-connector but an unrun pilot, and Phases 6–7 are in progress.
+audit gate, Phase 4 has a verified bounded live provider path but remains
+dependent on Phase 3, Phase 5 has a verified bounded owned-app connector but an
+unrun pilot, and Phases 6–7 are in progress with the full free-tier application
+publicly deployed.
 
 This plan is the source of truth for phase status and acceptance evidence. A
 phase may begin when its dependencies are met, but it is not complete until
@@ -31,10 +33,10 @@ attribution, redistribution, and derived-artifact terms before data is reused.
 | 1 | React/FastAPI slice, SQLite fallback, PostgreSQL store/migrations, API flow tests, and PostgreSQL 16 CI run `34819200466` | Complete | Local Docker is unavailable; the required PostgreSQL path is verified in CI |
 | 2 | Pinned per-case adapter, portable/Spark normalization, isolation checks, reviewed real-case report, and Spark CI run `34813930327` | Complete | Raw telemetry and protected locators remain outside Git by design |
 | 3 | Real grouped train/validation rows, rules/Isolation Forest comparison, artifact verification, and sealed final-test policy | Correct feature semantics and per-run operational metrics before model selection | Audit found unsupported latency naming and globally aggregated/non-operational metrics; current report is provisional and final held-out remains sealed |
-| 4 | Local TF-IDF/LSA retrieval, citations, typed compiled LangGraph, durable checkpoints, review, recovery, hostile-input tests, bounded provider seam, and expanded reviewed corpus | Root-level live provider verification and grounded claim review over the configured model | Provider path has mocked tests only; no live provider or production claim is made |
+| 4 | Local TF-IDF/LSA retrieval, citations, typed compiled LangGraph, durable checkpoints, review/recovery, hostile-input tests, and a bounded live DeepSeek path over the reviewed corpus | Complete Phase 3 semantics before a final comparison; expand claim-quality evaluation beyond one smoke | The hosted smoke is integration evidence only; its claim support was conservatively `uncertain` |
 | 5 | Bounded guest upload flow plus fixed-path, metadata-only live verification of the owned `cadencia-ai` GitHub Actions feed | Keep live connector scope explicit; pilot outreach requires authorization | Connector evidence is CI metadata, not application incident telemetry; pilot protocol is unrun |
-| 6 | Reproducible release checks, container/CI contract, runbooks, threat/model cards, controlled workload, four-width browser-local visual review, and green release matrix run `34821311229` | Preserve the public preview boundary and verify any future full backend hosting; the static Pages preview is available at [ronaldoj24.github.io/incident-lens](https://ronaldoj24.github.io/incident-lens/) | Final held-out stays sealed; provider cost/hosted latency and full browser/API integration are not measured |
-| 7 | Static authored-fixture preview and Pages workflow implemented; final UI deploy run `34821311324` verified at [ronaldoj24.github.io/incident-lens](https://ronaldoj24.github.io/incident-lens/) | Keep the README and preview explicit about browser-local authored-fixture behavior | Static preview is not the FastAPI/PostgreSQL/provider-backed application |
+| 6 | Release checks, CI/container contract, runbooks/cards, controlled workload, visual review, and public Render/Neon/DeepSeek application smoke | Finish public live browser review; final held-out remains sealed behind Phase 3 | Provider cost and representative hosted latency are not measured; live telemetry is not connected |
+| 7 | Default authored preview plus opt-in live Pages path, public Render API, Neon persistence, and bounded DeepSeek workflow documented | Keep presentation aligned with verified behavior and unresolved gates | Phase 3, pilot, representative claim-quality evaluation, and final held-out remain incomplete |
 
 ## Delivery rules
 
@@ -278,10 +280,10 @@ Next gate: correct feature semantics and per-run ranking/false-alarm evaluation,
 
 **Status:** In progress — local deterministic retrieval, typed LangGraph
 workflow, evidence support evaluation, hostile-log handling, source
-withholding, checkpoint/restart/cancel/retry, idempotent reports, a bounded
-provider-neutral OpenAI-compatible seam, and an expanded reviewed retrieval
-corpus are implemented and locally tested. PostgreSQL runtime is verified in
-CI, while live provider verification and claim-quality review remain pending.
+withholding, checkpoint/restart/cancel/retry, idempotent reports, and the
+bounded provider-neutral seam are implemented. DeepSeek and Neon paths are
+live-smoke verified, but Phase 3 remains a dependency and claim-quality
+evaluation is not established by one smoke.
 
 **Dependencies:** Phase 1 workflow state and Phase 2 source/version metadata;
 Phase 3 ranking output for a complete comparison.
@@ -317,9 +319,9 @@ Evidence record 2026-09-14
 Status: in progress
 Changed paths: `backend/incident_lens/provider/`, `backend/incident_lens/config.py`, `backend/incident_lens/workflow/graph.py`, `backend/incident_lens/api/app.py`, `backend/incident_lens/retrieval/`, `backend/incident_lens/evaluation/retrieval.py`, `backend/tests/test_phase4_provider.py`, `backend/tests/test_phase4_workflow.py`, `data/knowledge/verified-runbooks-v1.json`, `data/manifests/knowledge-sources.json`, `data/manifests/retrieval.json`, `.env.example`, `docs/CONFIGURATION.md`, `docs/evaluation/phase4-retrieval-report.json`, `docs/evaluation/phase4-workflow-evidence.md`, `README.md`
 Acceptance evidence: the API injects a provider-neutral OpenAI-compatible generator when a key is configured and otherwise uses a clearly labelled deterministic non-provider fallback; prompts and outputs are bounded, retries/timeouts/call caps are explicit, structured claims require explicit uncertainty and retrieved source IDs, and provider failures never substitute an authored replay. Unknown citations, malformed/truncated JSON, timeout, provider-error, no-key, forbidden-tool, and secret-boundary paths have mocked tests. The reviewed index contains 14 concise paraphrased summaries and the manifest contains 15 queries with decoys; local retrieval reports Recall@1 1.0, Recall@3 1.0, and MRR 1.0. Existing compiled workflow checkpoint/recovery, withholding, cancellation, review, and hostile-input evidence remains covered.
-Checks: `PYTHONPATH=backend backend/.venv/bin/python -m unittest backend.tests.test_phase4_provider backend.tests.test_phase4_workflow -v` — pass (16 tests); `PYTHONPATH=backend backend/.venv/bin/python -m unittest discover -s backend/tests -v` — pass (77 tests, 3 PostgreSQL tests skipped because `INCIDENT_LENS_DATABASE_URL` is unset); `PYTHONPATH=backend backend/.venv/bin/python -m incident_lens.validation.manifests data/manifests` — pass; `PYTHONPATH=backend backend/.venv/bin/python -m compileall -q backend/incident_lens` — pass; `git diff --check` — pass
-Known limitations/blockers: live provider verification, provider cost/latency, and claim-quality review remain unrun; the local retrieval metrics are not production or incident-diagnosis quality measures; browser evidence covers the authored static preview rather than the full API path
-Next gate: root-level live provider test with an explicitly authorized key, then separate claim-support evaluation and review of safe provider failures before any Phase 4 completion decision
+Checks: `PYTHONPATH=backend backend/.venv/bin/python -m unittest backend.tests.test_phase4_provider backend.tests.test_phase4_workflow -v` — pass (16 tests); full backend suite — pass (83 tests plus 3 PostgreSQL skips without an environment URL); real Neon PostgreSQL integration — pass (3 tests); local retrieval evaluation — Recall@1 1.0, Recall@3 1.0, MRR 1.0; direct bounded provider request — pass; full local and hosted provider workflows — pass; forced provider-transport failure — sanitized error, zero claims, no fallback; `git diff --check` — pass
+Known limitations/blockers: the single hosted claim cited three retrieved sources and included uncertainty/four next checks, but its lexical support status was `uncertain`; provider cost and representative latency are not measured; the local retrieval metrics are not production or incident-diagnosis quality measures; Phase 3 selection remains blocked and the final held-out split remains sealed
+Next gate: correct and freeze Phase 3 semantics, then run a representative claim-quality comparison without opening final held-out data prematurely
 
 ## Phase 5 — Guest testing, uploads, and owned live connector
 
@@ -373,15 +375,11 @@ Next gate: retain the connector's narrow scope in the public presentation and ru
 
 ## Phase 6 — Hardened deployment, evaluation, and visual QA
 
-**Status:** In progress — reproducible local release checks, provider-neutral
-deployment contract, container hardening, readiness/metrics hooks, rollback
-runbook, threat/access review, model/data card, controlled workload
-measurement, and browser-local visual review are implemented. Release matrix
-run `34821311229` is green across backend/PostgreSQL, frontend, and container;
-the static authored-fixture Pages preview is verified separately by run
-`34821311324` at <https://ronaldoj24.github.io/incident-lens/>. Full API/
-PostgreSQL browser integration, a backend deployment, and final held-out
-evaluation remain unverified/sealed.
+**Status:** In progress — reproducible release checks, container hardening,
+readiness/metrics, rollback notes, threat/model cards, controlled workload,
+and browser-local visual review are implemented. The full free-tier API path is
+deployed on Render with Neon PostgreSQL and a bounded DeepSeek workflow. Final
+public live browser review and final held-out evaluation remain pending/sealed.
 
 **Dependencies:** Phases 1–5 complete or documented blockers with independent
 work finished.
@@ -438,17 +436,18 @@ work finished.
 Evidence record 2026-09-14
 Status: in progress
 Changed paths: `Makefile`, `.github/workflows/phase6-release.yml`, `backend/Dockerfile`, `backend/incident_lens/observability.py`, `backend/incident_lens/validation/performance.py`, `backend/incident_lens/api/app.py`, `backend/incident_lens/api/store.py`, `backend/tests/test_phase6_release.py`, `contracts/v1/api.openapi.json`, `compose.yml`, `deploy/compose.release.yml`, `deploy/README.md`, `.env.example`, `README.md`, `docs/CONFIGURATION.md`, `docs/LOCAL_DEVELOPMENT.md`, `docs/OPERATIONS.md`, `docs/THREAT_MODEL.md`, `docs/MODEL_DATA_CARD.md`, `docs/evaluation/phase6-performance.md`, `docs/evaluation/phase6-visual-review.md`
-Acceptance evidence: local release command surface, provider-neutral release compose contract, non-root/healthchecked API image, readiness and bounded metrics endpoints, migration/rollback runbook, threat/access review, model/data card, and controlled workload measurement report
-Checks: release matrix run `34821311229` — pass (backend/PostgreSQL, frontend, and container jobs); final UI deploy run `34821311324` — pass (static authored-fixture preview at <https://ronaldoj24.github.io/incident-lens/>); `make release-check PERF_SAMPLES=20` — pass; full backend discovery ran 70 tests with 3 PostgreSQL skips because no `INCIDENT_LENS_DATABASE_URL` is configured; contracts, leakage, injection, reproducibility, artifact verification/validation, readiness/metrics/container boundary tests, and local controlled workload measurement passed; frontend lint/typecheck/test/build passed; `uv lock --project backend --check` — pass; `uv run --project backend python -m compileall -q backend/incident_lens` — pass; local link/privacy validator — pass; `git diff --check` — pass; compose files parsed with Ruby YAML because Docker is unavailable
-Fixture/source versions: authored `fixture-v1`, Phase 5 upload sample `phase5-upload-v1`, Phase 3 artifact `incident-lens-ranking-v1`, workload `phase6-local-controlled-v1`
-Known limitations/blockers: the verified public URL is only a browser-local authored static preview; no backend deployment/provider is configured; provider cost and hosted latency are not measured; the browser evidence covers only the static preview, not full FastAPI/PostgreSQL integration; screenshots are not checked in; final held-out data remains sealed
-Next gate: if a full public application is pursued, verify its API/PostgreSQL browser path and preserve the connector's narrow metadata-only scope; do not treat the Pages preview or green release matrix as Phase 6 completion
+Acceptance evidence: local release command surface, provider-neutral compose and Render Free contracts, non-root/healthchecked API image, readiness and bounded metrics, migration/rollback notes, threat/access review, model/data card, controlled workload report, and the dated hosted smoke in `docs/evaluation/phase6-live-deployment.md`
+Checks: release matrix run `34821311229` — pass; authored-preview deploy run `34821311324` — pass; `make release-check PERF_SAMPLES=20` — pass; full backend suite — pass; real Neon PostgreSQL integration — pass (3 tests); hosted readiness/CORS/session/cases/run/workflow/report/export — pass; Render deployment `dep-dak1vfeq1p3s73cajbdg` — live; frontend lint/test/build and Render blueprint validation — pass
+Fixture/source versions: authored `fixture-v1`, Phase 5 upload sample `phase5-upload-v1`, Phase 3 artifact `incident-lens-ranking-v1`, workload `phase6-local-controlled-v1`, workflow `phase4-workflow-v2-provider`, provider model `deepseek-flash`
+Known limitations/blockers: hosted provider cost and representative latency are not measured; the deployed telemetry is authored rather than live; the owned connector remains a separate metadata-only verification; final held-out data remains sealed; the public live UI still needs final desktop/mobile visual acceptance after its Pages build
+Next gate: verify the published live Pages build at desktop/mobile widths, then retain Phase 6 in progress until Phase 3 decisions are frozen and final-held-out evaluation can be authorized
 
 ## Phase 7 — Final public presentation
 
-**Status:** In progress — the README and static authored-fixture Pages preview
-are verified, while the full application presentation remains bounded by the
-known provider, backend-hosting, Phase 3, Phase 4, and pilot limitations.
+**Status:** In progress — the README, default authored-fixture preview, and
+opt-in full application path are implemented. The live public UI requires final
+visual acceptance; Phase 3, representative claim quality, and pilot limits
+remain published.
 
 **Dependencies:** Phase 6 acceptance evidence and a verified public preview;
 a full public backend deployment remains optional future work and is not
@@ -506,25 +505,23 @@ Checks: `PYTHONPATH=backend python3 -m incident_lens.validation.local README.md 
 Fixture/source versions: browser preview `VITE_INCIDENT_LENS_DEMO=1`, authored
 fixture `fixture-v1`; connector evidence remains the metadata-only
 `github-actions:RonaldoJ24/cadencia-ai` / `github-actions-v3` record
-Known limitations/blockers: the Pages URL is not hosted FastAPI/PostgreSQL,
-provider, or connector infrastructure; Phase 3 semantic audit remains
-blocked, Phase 4 live provider verification and claim-quality review remain
-pending despite the bounded provider seam and 14-document local corpus, the
-pilot is unrun, and no repair claim is made
-Next gate: keep the public presentation aligned with verified behavior; only
-mark this phase complete after the README acceptance checks and review of the
-remaining blockers, without marking the overall project complete
+Known limitations/blockers: only `?mode=live` uses hosted FastAPI, Neon, and
+DeepSeek; neither public mode is live application telemetry or repair
+infrastructure. Phase 3 remains blocked, one provider smoke is not
+representative claim-quality evidence, the pilot is unrun, and no repair claim
+is made
+Next gate: complete public live desktop/mobile visual acceptance and keep the
+presentation aligned with remaining blockers without marking the overall
+project complete
 
 ## Current blockers and decisions
 
-There is no blocker to foundation documentation. The static authored-fixture
-Pages preview is verified at
-<https://ronaldoj24.github.io/incident-lens/>; it is a browser-local preview,
-not hosted FastAPI/API/PostgreSQL/provider infrastructure. The owned-app
-connector is also verified, but only as a bounded metadata-only GitHub Actions
-call against `RonaldoJ24/cadencia-ai`, as recorded in
-`docs/evaluation/phase5-live-connector.md`; it is not application incident
-telemetry. Remaining blockers are the Phase 3 semantic metrics audit, live
-verification and claim-quality review for the Phase 4 provider seam, public
-backend/API/PostgreSQL hosting, and the unrun pilot. These blockers do not
-mark the overall project complete and do not support a repair claim.
+There is no blocker to the public free-tier deployment. The default Pages URL
+is a browser-local authored preview, while `?mode=live` uses the verified
+Render/Neon/DeepSeek path. The owned-app connector is separately verified only
+as a bounded metadata-only GitHub Actions call against
+`RonaldoJ24/cadencia-ai`; it is not application incident telemetry. Remaining
+blockers are the Phase 3 semantic metrics audit, representative Phase 4 claim
+quality, public live UI visual acceptance, final held-out authorization, and
+the unrun pilot. These blockers do not mark the overall project complete and do
+not support a repair claim.

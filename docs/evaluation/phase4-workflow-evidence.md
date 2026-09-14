@@ -1,8 +1,8 @@
 # Phase 4 workflow evidence
 
-Status: in progress. This record covers the local deterministic evidence
-workflow only; it does not claim a hosted retrieval provider, production
-telemetry, or benchmark performance.
+Status: in progress because Phase 3 selection remains blocked. This record now
+covers both the deterministic local path and one bounded live provider path;
+it does not claim production telemetry or benchmark performance.
 
 The verified knowledge index is `data/knowledge/verified-runbooks-v1.json`.
 Every hit carries a source ID, source version, title, citation, and source
@@ -44,8 +44,19 @@ errors, and unknown citations fail safely. With no key, the workflow uses
 `deterministic_non_provider_fallback`, which is clearly labelled and is not
 represented as fresh AI inference.
 
-Known limitations: the checked-in provider path has only mocked tests here;
-root-level live provider verification, provider cost/latency measurement,
-PostgreSQL runtime, and browser/e2e review remain pending. Retrieval metrics
-cover the reviewed public-demo corpus only, and no hosted model or external
-retrieval provider was called for this evidence.
+On 2026-09-14 the authenticated provider model listing included the configured
+`deepseek-flash` model. A direct bounded structured request completed, followed
+by a full local API workflow using the real provider. The hosted Render flow
+then created a fresh guest session, started a case run, completed the workflow,
+persisted it to Neon PostgreSQL, retrieved its report, and exported the stored
+workflow. Its single claim cited three retrieved source IDs, included explicit
+uncertainty and four next checks, and received an `uncertain` lexical-support
+status. No generated claim text is stored in this evidence note. A separate
+forced provider-transport failure produced a sanitized public error, zero
+claims, and no authored fallback or credential leakage.
+
+Known limitations: this is one integration smoke, not claim-quality evaluation
+at useful sample size. Provider cost and representative hosted latency are not
+measured. Retrieval metrics cover the reviewed public-demo corpus only, the
+telemetry is an authored controlled fixture, and Phase 3 remains blocked with
+the final held-out split sealed.

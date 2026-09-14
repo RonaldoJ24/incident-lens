@@ -1,8 +1,8 @@
 # Release deployment contract
 
-**Status: not deployed.** No provider, public URL, ingress, domain, or
-provider credential is selected or verified in this repository. The
-`compose.release.yml` file is a provider-neutral container contract that
+**Status: deployed on the selected free-tier path.** The public API readiness
+endpoint is <https://incident-lens-api.onrender.com/health/ready>. The
+`compose.release.yml` file remains a provider-neutral container contract that
 requires an immutable image reference and a managed PostgreSQL URL supplied
 outside Git.
 
@@ -20,13 +20,14 @@ Before using the contract:
    an authenticated internal observability path.
 4. Perform the smoke flow in `docs/OPERATIONS.md` using a fresh guest session.
 
-This is not a deployment claim. Public deployment and the owned read-only
-connector remain explicit external blockers in the implementation plan.
+This generic contract is not evidence for a compose-based deployment. The
+verified Render/Neon/DeepSeek path is recorded separately in
+[`../docs/evaluation/phase6-live-deployment.md`](../docs/evaluation/phase6-live-deployment.md).
 
-## Optional Render Free contract
+## Verified Render Free path
 
-[`../render.yaml`](../render.yaml) is a checked-in, provider-specific start
-contract for a later Render Free Python service. It uses the repository root,
+[`../render.yaml`](../render.yaml) is the checked-in, provider-specific start
+contract for the Render Free Python service. It uses the repository root,
 installs/syncs the backend with `uv`, runs migrations from
 [`render-start.sh`](render-start.sh), listens on `$PORT`, and exposes
 `/health/ready` in the Ohio region on the free plan. Render secret files must
@@ -40,5 +41,8 @@ pooled URL.
 Render Free has no paid pre-deploy hook, so migration is intentionally a
 startup step. Its disk is ephemeral and the service is limited to 512 MB and
 0.1 CPU; no durable uploads or local database files are part of this contract.
-The Render service and API URL remain unverified until an external deployment
-is actually run.
+The service `incident-lens-api` is deployed in Ohio on Render Free and uses the
+exact Pages origin for CORS. A live readiness request and a fresh
+session/case/run/workflow/report/export flow passed on 2026-09-14 against Neon
+PostgreSQL and DeepSeek. The deployed telemetry remains the authored
+controlled fixture; it is not a live production feed.
