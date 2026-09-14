@@ -70,7 +70,7 @@ class Phase6ReleaseTests(unittest.TestCase):
         self.assertIn("USER 10001:10001", dockerfile)
         self.assertIn("HEALTHCHECK", dockerfile)
         self.assertIn("uv sync --frozen --no-dev", dockerfile)
-        self.assertIn("COPY data/knowledge ./data/knowledge", dockerfile)
+        self.assertIn("COPY data/knowledge /data/knowledge", dockerfile)
         self.assertIn('ARG UV_VERSION=0.11.27', dockerfile)
         self.assertIn('version: "0.11.27"', workflow)
         self.assertIn("provisional and blocked from release acceptance", makefile)

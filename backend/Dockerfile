@@ -5,7 +5,7 @@ ARG UV_VERSION=0.11.27
 COPY backend/pyproject.toml backend/uv.lock ./
 COPY backend/incident_lens ./incident_lens
 COPY backend/migrations ./migrations
-COPY data/knowledge ./data/knowledge
+COPY data/knowledge /data/knowledge
 RUN pip install --no-cache-dir "uv==${UV_VERSION}" \
     && uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH"
