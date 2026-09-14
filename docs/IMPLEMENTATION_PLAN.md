@@ -1,7 +1,7 @@
 # Incident Lens implementation plan
 
-**Overall status:** Phase 0 complete; Phase 1 local slice in progress. No
-application phase is complete.
+**Overall status:** Phase 0 complete; Phase 1 local slice and Phase 2 source
+work are in progress. No application phase is complete.
 
 This plan is the source of truth for phase status and acceptance evidence. A
 phase may begin when its dependencies are met, but it is not complete until
@@ -12,7 +12,7 @@ them.
 ## Planning handoff
 
 **Planning review:** complete on 2026-09-13. **Application delivery:** Phase 1
-local slice in progress. The product contract, eight-stage sequence,
+local slice and Phase 2 source work in progress. The product contract, eight-stage sequence,
 dependencies, acceptance gates, and open decisions remain the source of truth.
 
 The cited RCAEval project and dataset pages were checked during this review and
@@ -25,8 +25,8 @@ attribution, redistribution, and derived-artifact terms before data is reused.
 | Phase | Current evidence | Next gate | Known decision or blocker |
 | --- | --- | --- | --- |
 | 0 | Scaffold, v1 contracts, rendered wireframe, audited manifests, and focused validation pass (evidence record below) | Phase 1 runnable vertical slice | No external blocker; per-case telemetry fetch and final development selection remain Phase 2 evidence-led work |
-| 1 | Local SQLite API, authored fixture worker, React Investigate shell, migration, API flow tests, and four-width browser review (evidence record below) | PostgreSQL runtime verification | Docker and PostgreSQL are unavailable on this host; migration runtime remains unverified |
-| 2 | None | Persistent state plus audited source manifests | Blocked by Phases 0–1; object-storage implementation and exact upstream revisions remain open |
+| 1 | Local SQLite API, authored fixture worker, React Investigate shell, migration, API flow tests, and four-width browser review (evidence record below) | PostgreSQL persistence implementation and runtime verification | Docker and PostgreSQL are unavailable on this host; neither the persistence implementation nor migration runtime is verified |
+| 2 | Pinned per-case source adapter, portable deterministic normalization, separate controlled-runtime schema, artifact layout, and one reviewed quality report (evidence record below) | Spark CI parity/isolation run plus remaining case review | Spark/Java CI workflow has not run; PostgreSQL persistence implementation and runtime verification remain Phase 1 work |
 | 3 | None | Quality-reviewed, leakage-safe train/validation manifests | Blocked by Phase 2; method and thresholds remain evidence-led decisions |
 | 4 | None | Persistent workflow state, source metadata, and ranking output | Blocked by Phases 1–3; embedding/model provider remains unselected pending availability and evaluation |
 | 5 | None | Evidence workflow and upload/source contracts | Blocked by Phases 2 and 4; owned-app target/access is an external decision, and pilot outreach requires explicit authorization |
@@ -118,14 +118,15 @@ Changed paths: `frontend/`, `backend/`, `contracts/v1/`, `data/manifests/`, `doc
 Acceptance evidence: v1 JSON Schema with entity/payload discriminator binding, OpenAPI retrieval/review/export operations, and representative fixture at `contracts/v1/`; rendered wireframe PNG/SVG and token/mapping notes at `docs/design/`; neutral RE2-OB, separate controlled-runtime, and knowledge ledgers at `data/manifests/`; leakage review at `docs/evaluation/leakage-review.md`
 Checks: `pnpm --dir frontend run lint` — pass; `pnpm --dir frontend run typecheck` — pass; `pnpm --dir frontend test` — pass; `pnpm --dir frontend run build` — pass; `PYTHONPATH=backend python3 -m unittest discover -s backend/tests -v` — pass (10 tests); `PYTHONPATH=backend python3 -m incident_lens.validation.manifests data/manifests` — pass (3 manifests); `PYTHONPATH=backend python3 -m incident_lens.validation.contracts contracts/v1/examples/representative.json` — pass (9 documents); `PYTHONPATH=backend python3 -m incident_lens.validation.local README.md docs backend contracts data .env.example frontend/src` — pass; `rsvg-convert -w 1440 -h 1040 docs/design/investigation-wireframe.svg -o docs/design/investigation-wireframe.png` — pass; `git diff --check` — pass
 Fixture/source versions: RCAEval `bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90`; RCAEval Hugging Face `afeacb11bcc94dadfd1c8f483ee4377b2b8b614e`; OpenTelemetry Demo `9bfe486ff48ee8a6ea942be74171342cb71a9327`; domain contracts `v1`
-Known limitations/blockers: no raw telemetry, live connector, provider, persistence, or completed workflow is claimed; RE2-OB cases remain neutral selection records with unknown completeness until the Phase 2 per-case adapter runs; the responsive artifact records 768/390 layout decisions but browser screenshots and focus-trap behavior await Phase 1
+Known limitations/blockers: no raw telemetry, live connector, provider, persistence, or completed workflow is claimed; RE2-OB cases remain neutral selection records with unknown completeness until the Phase 2 per-case adapter runs; browser review is recorded in the Phase 1 evidence below, but screenshots are not checked in
 Next gate: Phase 1 runnable vertical slice with persistent state and actual browser review at 1440/1280/768/390
 
 ## Phase 1 — Runnable vertical slice
 
 **Status:** In progress — local SQLite API, authored fixture worker, React
 shell, migration, focused flow tests, and browser review are implemented.
-PostgreSQL runtime verification remains pending.
+The PostgreSQL persistence implementation and PostgreSQL runtime/migration
+verification remain pending.
 
 **Dependencies:** Phase 0 contracts and design decisions.
 
@@ -166,12 +167,15 @@ Changed paths: `backend/incident_lens/api/`, `backend/incident_lens/worker/`, `b
 Acceptance evidence: local API flow in `backend/tests/test_api.py` covers session creation, three distinct case outcomes, UTC window preservation, evidence/findings/single-event timeline retrieval, guest isolation, cancellation, retry attempt, review history, reload from SQLite, idempotent report save, and downloadable JSON export; migration at `backend/migrations/001_initial.sql`; authored fixture and source boundary at `backend/incident_lens/fixtures/cases.json`; local run instructions at `docs/LOCAL_DEVELOPMENT.md`; local browser review exercised all three cases at 1440/1280/768/390 CSS pixels with no horizontal overflow, visible 3 px keyboard focus, explicit no-run state, and truthful unavailable actions
 Checks: `uv run --project backend python -m unittest discover -s backend/tests -v` — pass (14 tests); `pnpm --dir frontend run lint` — pass; `pnpm --dir frontend run typecheck` — pass; `pnpm --dir frontend test` — pass; `pnpm --dir frontend run build` — pass; `uv run --project backend python -m incident_lens.validation.local README.md docs backend contracts data .env.example frontend/src` — pass; `git diff --check` — pass
 Fixture/source versions: authored synthetic controlled fixture `fixture-v1`; FastAPI `0.141.1`; Pydantic `2.13.5`; SQLite local store; PostgreSQL migration `001_initial.sql`
-Known limitations/blockers: Docker and PostgreSQL are unavailable on this host, so PostgreSQL runtime/migration verification is pending; browser review was interactive and no screenshots are checked in yet; request-triggered FastAPI BackgroundTasks are bounded but durable queue/restart behavior remains Phase 4 work; fixture is not RCAEval or live telemetry
-Next gate: verify the PostgreSQL migration/runtime path; Phase 2 source-adapter work can proceed independently against the persistent local contract
+Known limitations/blockers: PostgreSQL persistence implementation is not present and Docker/PostgreSQL are unavailable on this host, so migration/runtime verification is also pending; browser review was interactive and no screenshots are checked in yet; request-triggered FastAPI BackgroundTasks are bounded but durable queue/restart behavior remains Phase 4 work; fixture is not RCAEval or live telemetry
+Next gate: implement PostgreSQL persistence, then verify the PostgreSQL runtime/migration path; Phase 2 source-adapter work can proceed independently against the persistent local contract
 
 ## Phase 2 — Real source adapters and data isolation
 
-**Status:** Not started.
+**Status:** In progress — pinned per-case fetch, portable deterministic
+normalization, leakage/isolation checks, separate controlled-runtime adapter,
+artifact references, and one reviewed quality report are implemented. Spark CI
+parity and the remaining case review are not yet complete.
 
 **Dependencies:** Phase 1 persistent state and Phase 0 manifests.
 
@@ -200,6 +204,15 @@ Next gate: verify the PostgreSQL migration/runtime path; Phase 2 source-adapter 
 - `python -m incident_lens.pipeline.normalize --manifest data/manifests/dev.json`
 - `python -m incident_lens.pipeline.check_leakage data/manifests`
 - `uv run --project backend pytest -m isolation`
+
+Evidence record 2026-09-14
+Status: in progress
+Changed paths: `backend/incident_lens/adapters/rcaeval.py`, `backend/incident_lens/adapters/otel.py`, `backend/incident_lens/pipeline/`, `backend/tests/test_phase2_pipeline.py`, `backend/migrations/002_artifact_references.sql`, `data/manifests/development.json`, `docs/evaluation/phase2-source-boundary.md`, `docs/evaluation/rcaeval-re2ob-001-quality.json`, `.github/workflows/phase2-offline.yml`, `docs/LOCAL_DEVELOPMENT.md`, `README.md`
+Acceptance evidence: pinned RCAEval/Hugging Face per-case adapter with protected locators and raw cleanup; one real RE2-OB case quality report regenerated by `incident_lens.pipeline.generate_quality` with neutral IDs, deterministic counts/hashes, sub-second timestamp handling, and injection metadata excluded; independent OpenTelemetry controlled-runtime result schema; object-storage key/reference design in `backend/incident_lens/pipeline/artifacts.py` and `backend/migrations/002_artifact_references.sql`
+Checks: `PYTHONPATH=backend backend/.venv/bin/python -m unittest discover -s backend/tests -v` — pass (28 tests); `PYTHONPATH=backend backend/.venv/bin/python -m incident_lens.pipeline.check_leakage data/manifests` — pass; `PYTHONPATH=backend backend/.venv/bin/python -m incident_lens.validation.manifests data/manifests` — pass (3 manifests); `PYTHONPATH=backend backend/.venv/bin/python -m incident_lens.validation.local README.md docs backend contracts data .env.example frontend/src` — pass; `uv lock --project backend --check` — pass; `git diff --check` — pass; `.github/workflows/phase2-offline.yml` — parity/leakage workflow added, not run
+Fixture/source versions: RCAEval `bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90`; Hugging Face `afeacb11bcc94dadfd1c8f483ee4377b2b8b614e`; reviewed case `dev-re2ob-001`; normalization `incident-lens-normalization-v1`
+Known limitations/blockers: Spark/Java CI workflow has not run, so Phase 2 remains in progress; PostgreSQL persistence implementation and PostgreSQL migration/runtime verification remain pending for Phase 1; raw telemetry and protected locators are not in Git
+Next gate: run `.github/workflows/phase2-offline.yml` and inspect Spark/portable parity and leakage results
 
 ## Phase 3 — ML train, evaluate, and serve
 

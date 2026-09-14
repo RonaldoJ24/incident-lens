@@ -4,11 +4,13 @@
 
 **Understand what failed, see the evidence, and continue the investigation.**
 
-> **Status: Phase 1 local slice in progress.** The repository contains a
-> runnable React/TypeScript and FastAPI/Pydantic slice over a small authored
-> SQLite fixture, plus the Phase 0 contracts and audit artifacts. The local UI
-> has been reviewed at its four target widths; PostgreSQL, deployment, live
-> adapters, and evaluation remain unverified future work.
+> **Status: Phase 1 local slice and Phase 2 source work in progress.** The
+> repository contains a runnable React/TypeScript and FastAPI/Pydantic slice
+> over a small authored SQLite fixture, plus a pinned, leakage-safe RCAEval
+> per-case adapter and deterministic offline normalization. PostgreSQL
+> persistence implementation and runtime verification remain pending; the
+> migration is a contract artifact only. Spark CI, deployment, live connectors,
+> and benchmark evaluation remain unverified.
 
 Incident Lens is a focused investigation workspace for the period after a
 checkout failure. An engineer selects a service and time window, reviews logs,
@@ -58,9 +60,13 @@ continue. Neither is represented as available in this foundation.
 The source and evaluation plan starts with [RCAEval](https://github.com/phamquiluan/RCAEval)
 and its [Hugging Face dataset](https://huggingface.co/datasets/phamquiluan/RCAEval):
 735 benchmark cases in total, with 10–20 development cases initially selected
-from the 90-case RE2-OB subset. Cases will be fetched individually, assigned
-neutral IDs, and kept out of the repository as raw data. Hidden cause labels,
-filenames, and indexes must not leak into prompts or retrieval. The [OpenTelemetry
+from the 90-case RE2-OB subset. Cases are fetched individually by the Phase 2
+adapter, assigned neutral IDs, and kept out of the repository as raw data. One
+reviewed RE2-OB quality report is checked in at
+[`docs/evaluation/rcaeval-re2ob-001-quality.json`](docs/evaluation/rcaeval-re2ob-001-quality.json);
+it contains real counts and hashes but no source locator, injection metadata,
+or hidden label. Hidden cause labels, filenames, and indexes must not leak into
+prompts or retrieval. The [OpenTelemetry
 Demo](https://opentelemetry.io/docs/demo/) and its [feature flag
 scenario](https://opentelemetry.io/docs/demo/feature-flags/) are planned as a
 separate controlled-failure adapter, not as a schema assumption about RCAEval.
@@ -77,7 +83,7 @@ foundation checks and their results are recorded in the Phase 0 evidence record
 in the implementation plan.
 
 The local Phase 1 commands, authored-fixture boundary, API flow, and pending
-PostgreSQL/browser checks are documented in
+PostgreSQL implementation and runtime/migration checks are documented in
 [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
 
 There is no working demo URL, public screenshot set, measured result,

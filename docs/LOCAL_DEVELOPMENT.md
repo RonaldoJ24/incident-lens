@@ -29,5 +29,6 @@ pnpm --dir frontend run build
 ```
 
 The PostgreSQL migration is [`backend/migrations/001_initial.sql`](../backend/migrations/001_initial.sql),
-but PostgreSQL/container runtime verification is still pending. No public
-deployment, live connector, provider, or benchmark result is implied.
+but the PostgreSQL persistence implementation and PostgreSQL/container
+runtime/migration verification are still pending. No public deployment, live
+connector, provider, or benchmark result is implied.

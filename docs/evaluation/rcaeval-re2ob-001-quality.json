@@ -1,0 +1,60 @@
+{
+  "attribution": "Pham, Luan et al. RCAEval (2025). One pinned RE2-OB case; raw telemetry remains outside Git.",
+  "case_id": "dev-re2ob-001",
+  "leakage_review": {
+    "hidden_labels_removed": true,
+    "injection_metadata_excluded": true,
+    "neutral_ids": true,
+    "review_status": "passed",
+    "source_filenames_removed": true
+  },
+  "license": {
+    "name": "MIT",
+    "url": "https://github.com/phamquiluan/RCAEval/blob/bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90/LICENSE"
+  },
+  "manifest_hash": "695705e3ee9eff4767152a227eb3e145cca0359f2f8eccdd657edd862ab0fd1b",
+  "normalization_version": "incident-lens-normalization-v1",
+  "raw_data_in_repo": false,
+  "report_version": "phase2-quality-v1",
+  "signal_completeness": {
+    "logs": "available",
+    "metrics": "available",
+    "traces": "available"
+  },
+  "signals": {
+    "logs": {
+      "duplicate_count": 113314,
+      "input_count": 171322,
+      "malformed_timestamp_count": 0,
+      "output_count": 58008,
+      "sha256": "2c0455563490a7dcb6b7773ab910a31a980324392ab044cb8a0a0f30ecc6ec92"
+    },
+    "metrics": {
+      "duplicate_count": 0,
+      "input_count": 1441,
+      "malformed_timestamp_count": 0,
+      "output_count": 1441,
+      "sha256": "d0da781cf48c9c32a749f29f99f34a2f0674ef9ae31dd66a56949ef7d3e127db"
+    },
+    "traces": {
+      "duplicate_count": 0,
+      "input_count": 391997,
+      "malformed_timestamp_count": 0,
+      "output_count": 391997,
+      "sha256": "9ca302e3a391e2beeabadfbfd8396d8c561dbb99dd090ce438efe234f84ac1e6"
+    }
+  },
+  "source": {
+    "dataset": "RCAEval",
+    "dataset_revision": "RCAEval-HF@afeacb11bcc94dadfd1c8f483ee4377b2b8b614e",
+    "source_id": "rcaeval",
+    "source_version": "RCAEval@bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90",
+    "subset": "RE2-OB"
+  },
+  "split": "development",
+  "window": {
+    "end": "2024-01-15T21:48:06Z",
+    "event_count_after_deduplication": 451446,
+    "start": "2024-01-15T21:24:06Z"
+  }
+}

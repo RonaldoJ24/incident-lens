@@ -14,5 +14,11 @@ dependencies = [
   "uvicorn>=0.30,<1"
 ]
 
+[project.optional-dependencies]
+# Kept optional so the API/request worker never needs a parquet reader or
+# Spark/Java runtime.  CI can install `.[data,spark]` for offline jobs.
+data = ["polars>=1,<2"]
+spark = ["pyspark>=3.5,<4"]
+
 [tool.setuptools.packages.find]
 where = ["."]

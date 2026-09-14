@@ -15,12 +15,12 @@
   "selection": {
     "declared_subset_cases": 90,
     "selected_case_count": 12,
-    "selection_status": "pending_per_case_fetch",
+    "selection_status": "one_case_quality_reviewed; remaining_case_fetches_pending",
     "selection_method": "neutral IDs assigned before any raw telemetry fetch; final selection remains evidence-led"
   },
   "selected_case_count": 12,
   "cases": [
-    { "case_id": "dev-re2ob-001", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-001", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90", "signal_completeness": { "logs": "available", "metrics": "available", "traces": "available" }, "interval_status": "audited", "quality_report": "docs/evaluation/rcaeval-re2ob-001-quality.json", "normalized_manifest_hash": "695705e3ee9eff4767152a227eb3e145cca0359f2f8eccdd657edd862ab0fd1b" },
     { "case_id": "dev-re2ob-002", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
     { "case_id": "dev-re2ob-003", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
     { "case_id": "dev-re2ob-004", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
