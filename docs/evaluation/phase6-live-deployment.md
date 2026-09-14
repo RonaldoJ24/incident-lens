@@ -42,6 +42,17 @@ Neon project was not modified.
 - `make release-check PERF_SAMPLES=20` exited 0. A separate real-Neon
   integration run passed all three PostgreSQL tests. Frontend lint, tests, and
   build passed, and the Render blueprint validated.
+- GitHub Pages run
+  [`34869828671`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34869828671)
+  deployed the exact Render origin, and release run
+  [`34869828701`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34869828701)
+  passed its backend/PostgreSQL, frontend, and container jobs.
+- The published live path completed a provider workflow in the browser at
+  1280×800 and 390×844. Both widths had `scrollWidth == innerWidth`; desktop
+  showed the provider, uncertainty, support status, cited sources, and evidence,
+  while mobile retained the same hierarchy with a usable full-width run button.
+  The default URL remained visibly labelled authored/browser-local and showed
+  no provider claim.
 
 ## Limits
 

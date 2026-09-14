@@ -29,9 +29,9 @@ Verified delivery evidence:
 
 | Surface | Evidence |
 | --- | --- |
-| Public preview | [Final UI deploy run `34821311324`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34821311324) passed; [default URL](https://ronaldoj24.github.io/incident-lens/) resolves to the browser-local preview |
+| Public preview | [Live-path UI deploy run `34869828671`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34869828671) passed; [default URL](https://ronaldoj24.github.io/incident-lens/) resolves to the browser-local preview |
 | Live application | [Live Pages path](https://ronaldoj24.github.io/incident-lens/?mode=live) calls the [Render readiness endpoint](https://incident-lens-api.onrender.com/health/ready); the dated smoke result is recorded in [`docs/evaluation/phase6-live-deployment.md`](docs/evaluation/phase6-live-deployment.md) |
-| Release matrix | [Final run `34821311229`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34821311229) passed the backend/PostgreSQL, frontend, and container jobs |
+| Release matrix | [Live-path run `34869828701`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34869828701) passed the backend/PostgreSQL, frontend, and container jobs |
 | PostgreSQL persistence | [Phase 1 run `34819200466`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34819200466) passed the PostgreSQL integration path |
 | Owned connector | The bounded metadata-only verification is recorded in [`docs/evaluation/phase5-live-connector.md`](docs/evaluation/phase5-live-connector.md) |
 
@@ -173,7 +173,7 @@ checks, reproducibility, provisional artifact verification, controlled local
 workload measurement, frontend checks, container boundaries, and the static
 preview build. PostgreSQL integration is included when
 `INCIDENT_LENS_DATABASE_URL` is configured. The corresponding green CI matrix
-is [final run `34821311229`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34821311229).
+is [live-path run `34869828701`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34869828701).
 
 The evidence trail is split by data boundary:
 

@@ -35,7 +35,7 @@ attribution, redistribution, and derived-artifact terms before data is reused.
 | 3 | Real grouped train/validation rows, rules/Isolation Forest comparison, artifact verification, and sealed final-test policy | Correct feature semantics and per-run operational metrics before model selection | Audit found unsupported latency naming and globally aggregated/non-operational metrics; current report is provisional and final held-out remains sealed |
 | 4 | Local TF-IDF/LSA retrieval, citations, typed compiled LangGraph, durable checkpoints, review/recovery, hostile-input tests, and a bounded live DeepSeek path over the reviewed corpus | Complete Phase 3 semantics before a final comparison; expand claim-quality evaluation beyond one smoke | The hosted smoke is integration evidence only; its claim support was conservatively `uncertain` |
 | 5 | Bounded guest upload flow plus fixed-path, metadata-only live verification of the owned `cadencia-ai` GitHub Actions feed | Keep live connector scope explicit; pilot outreach requires authorization | Connector evidence is CI metadata, not application incident telemetry; pilot protocol is unrun |
-| 6 | Release checks, CI/container contract, runbooks/cards, controlled workload, visual review, and public Render/Neon/DeepSeek application smoke | Finish public live browser review; final held-out remains sealed behind Phase 3 | Provider cost and representative hosted latency are not measured; live telemetry is not connected |
+| 6 | Release checks, CI/container contract, runbooks/cards, controlled workload, public Render/Neon/DeepSeek smoke, and desktop/mobile live visual review | Resolve Phase 3 and freeze decisions before authorizing final-held-out evaluation | Provider cost and representative hosted latency are not measured; live telemetry is not connected |
 | 7 | Default authored preview plus opt-in live Pages path, public Render API, Neon persistence, and bounded DeepSeek workflow documented | Keep presentation aligned with verified behavior and unresolved gates | Phase 3, pilot, representative claim-quality evaluation, and final held-out remain incomplete |
 
 ## Delivery rules
@@ -377,9 +377,9 @@ Next gate: retain the connector's narrow scope in the public presentation and ru
 
 **Status:** In progress — reproducible release checks, container hardening,
 readiness/metrics, rollback notes, threat/model cards, controlled workload,
-and browser-local visual review are implemented. The full free-tier API path is
+and default/live visual reviews are implemented. The full free-tier API path is
 deployed on Render with Neon PostgreSQL and a bounded DeepSeek workflow. Final
-public live browser review and final held-out evaluation remain pending/sealed.
+held-out evaluation remains pending and sealed behind Phase 3.
 
 **Dependencies:** Phases 1–5 complete or documented blockers with independent
 work finished.
@@ -415,11 +415,11 @@ work finished.
   hosted latency, public deployment, and live connector performance remain not
   measured.
 - [Browser visual review evidence](evaluation/phase6-visual-review.md) records
-  the dated browser-local authored preview review, responsive layout checks,
-  keyboard focus, upload, source-withholding, save/export, reload, and
-  uncertainty flows. Screenshots were captured and inspected interactively but
-  are not checked in. No full FastAPI/PostgreSQL, public deployment, provider,
-  connector, or repair claim follows from this review.
+  the dated default-preview and public live-path reviews, responsive layout,
+  keyboard focus, upload, source-withholding, save/export, reload, provider,
+  citation, and uncertainty flows. Screenshots were captured and inspected
+  interactively but are not checked in. No production telemetry, connector,
+  repair, or representative claim-quality result follows from this review.
 
 **Checks to establish**
 
@@ -437,21 +437,20 @@ Evidence record 2026-09-14
 Status: in progress
 Changed paths: `Makefile`, `.github/workflows/phase6-release.yml`, `backend/Dockerfile`, `backend/incident_lens/observability.py`, `backend/incident_lens/validation/performance.py`, `backend/incident_lens/api/app.py`, `backend/incident_lens/api/store.py`, `backend/tests/test_phase6_release.py`, `contracts/v1/api.openapi.json`, `compose.yml`, `deploy/compose.release.yml`, `deploy/README.md`, `.env.example`, `README.md`, `docs/CONFIGURATION.md`, `docs/LOCAL_DEVELOPMENT.md`, `docs/OPERATIONS.md`, `docs/THREAT_MODEL.md`, `docs/MODEL_DATA_CARD.md`, `docs/evaluation/phase6-performance.md`, `docs/evaluation/phase6-visual-review.md`
 Acceptance evidence: local release command surface, provider-neutral compose and Render Free contracts, non-root/healthchecked API image, readiness and bounded metrics, migration/rollback notes, threat/access review, model/data card, controlled workload report, and the dated hosted smoke in `docs/evaluation/phase6-live-deployment.md`
-Checks: release matrix run `34821311229` — pass; authored-preview deploy run `34821311324` — pass; `make release-check PERF_SAMPLES=20` — pass; full backend suite — pass; real Neon PostgreSQL integration — pass (3 tests); hosted readiness/CORS/session/cases/run/workflow/report/export — pass; Render deployment `dep-dak1vfeq1p3s73cajbdg` — live; frontend lint/test/build and Render blueprint validation — pass
+Checks: live-path release run `34869828701` — pass (backend/PostgreSQL, frontend, container); Pages run `34869828671` — pass; `make release-check PERF_SAMPLES=20` with real Neon — pass; full backend suite — pass; hosted readiness/CORS/session/cases/run/workflow/report/export — pass; Render deployment `dep-dak1vfeq1p3s73cajbdg` — live; public browser workflow at 1280×800 and 390×844 — pass with no horizontal overflow; frontend lint/test/build and Render blueprint validation — pass
 Fixture/source versions: authored `fixture-v1`, Phase 5 upload sample `phase5-upload-v1`, Phase 3 artifact `incident-lens-ranking-v1`, workload `phase6-local-controlled-v1`, workflow `phase4-workflow-v2-provider`, provider model `deepseek-flash`
-Known limitations/blockers: hosted provider cost and representative latency are not measured; the deployed telemetry is authored rather than live; the owned connector remains a separate metadata-only verification; final held-out data remains sealed; the public live UI still needs final desktop/mobile visual acceptance after its Pages build
-Next gate: verify the published live Pages build at desktop/mobile widths, then retain Phase 6 in progress until Phase 3 decisions are frozen and final-held-out evaluation can be authorized
+Known limitations/blockers: hosted provider cost and representative latency are not measured; the deployed telemetry is authored rather than live; the owned connector remains a separate metadata-only verification; final held-out data remains sealed
+Next gate: retain Phase 6 in progress until Phase 3 decisions are corrected/frozen and final-held-out evaluation can be authorized
 
 ## Phase 7 — Final public presentation
 
 **Status:** In progress — the README, default authored-fixture preview, and
-opt-in full application path are implemented. The live public UI requires final
-visual acceptance; Phase 3, representative claim quality, and pilot limits
-remain published.
+opt-in full application path are implemented and visually verified. Phase 3,
+representative claim quality, and pilot limits remain published.
 
 **Dependencies:** Phase 6 acceptance evidence and a verified public preview;
-a full public backend deployment remains optional future work and is not
-claimed here.
+the public backend path is deployed, while Phase 6 final-held-out acceptance
+remains sealed behind Phase 3.
 
 **Deliverables**
 
@@ -480,10 +479,10 @@ claimed here.
 Evidence record 2026-09-14
 Status: in progress
 Changed paths: `README.md`, `docs/IMPLEMENTATION_PLAN.md`, `frontend/src/App.tsx`, `frontend/src/demoAdapter.ts`, `frontend/src/UploadPanel.tsx`, `frontend/src/styles.css`, `frontend/scripts/test.mjs`, `.github/workflows/public-demo-pages.yml`
-Acceptance evidence: README links the verified static Pages preview at
-<https://ronaldoj24.github.io/incident-lens/>, identifies it as a browser-local
-authored-fixture demo, documents the exact local setup/API/evaluation/deployment
-surfaces, and publishes Phase 3/4/5 limitations. The deployed UI exposes
+Acceptance evidence: README links the verified default and live Pages paths,
+identifies the default as a browser-local authored-fixture demo, documents the
+hosted Render/Neon/DeepSeek and local setup/API/evaluation/deployment surfaces,
+and publishes Phase 3/4/5 limitations. The deployed UI exposes
 accessible Evaluation and Engineering sections, a compact investigation
 hierarchy (context, primary finding, evidence drawer, timeline, review actions),
 and a collapsed optional upload. Primary status/finding copy is plain-language;
@@ -497,8 +496,8 @@ latency, `0.04` error rate, and a `640 ms` trace; `insufficient-evidence` runs
 from `2026-09-13T10:00:00Z` to `2026-09-13T10:10:00Z` with metric and trace
 records missing. Browser
 acceptance at `1280x800` and `390x844` found no horizontal overflow; screenshots
-were captured and inspected but are not checked in. Final UI deploy run
-`34821311324` passed; release matrix run `34821311229` passed its
+were captured and inspected but are not checked in. Live-path UI deploy run
+`34869828671` passed; release matrix run `34869828701` passed its
 backend/PostgreSQL, frontend, and container jobs; PostgreSQL integration run
 `34819200466` passed.
 Checks: `PYTHONPATH=backend python3 -m incident_lens.validation.local README.md docs` — pass; `git diff --check` — pass; manual link/path/privacy-sensitive wording review — pass
@@ -510,9 +509,8 @@ DeepSeek; neither public mode is live application telemetry or repair
 infrastructure. Phase 3 remains blocked, one provider smoke is not
 representative claim-quality evidence, the pilot is unrun, and no repair claim
 is made
-Next gate: complete public live desktop/mobile visual acceptance and keep the
-presentation aligned with remaining blockers without marking the overall
-project complete
+Next gate: keep the presentation aligned with remaining upstream blockers
+without marking the overall project complete
 
 ## Current blockers and decisions
 
@@ -522,6 +520,6 @@ Render/Neon/DeepSeek path. The owned-app connector is separately verified only
 as a bounded metadata-only GitHub Actions call against
 `RonaldoJ24/cadencia-ai`; it is not application incident telemetry. Remaining
 blockers are the Phase 3 semantic metrics audit, representative Phase 4 claim
-quality, public live UI visual acceptance, final held-out authorization, and
-the unrun pilot. These blockers do not mark the overall project complete and do
+quality, final held-out authorization, and the unrun pilot. These blockers do
+not mark the overall project complete and do
 not support a repair claim.
