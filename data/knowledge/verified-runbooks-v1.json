@@ -1,0 +1,39 @@
+{
+  "index_version": "incident-lens-knowledge-v1",
+  "manifest_id": "incident-lens-verified-knowledge-2026-09-14",
+  "embedding": {
+    "provider": "local_tfidf_lsa",
+    "version": "tfidf-lsa-v1",
+    "external_provider": false,
+    "note": "A frozen TF-IDF matrix and deterministic truncated-SVD projection provide a local semantic fallback; no hosted model is claimed."
+  },
+  "documents": [
+    {
+      "source_id": "otel-demo-docs",
+      "source_version": "docs@2026-09-13",
+      "title": "OpenTelemetry Demo documentation",
+      "url": "https://opentelemetry.io/docs/demo/",
+      "citation": "OpenTelemetry Demo documentation, docs@2026-09-13",
+      "source_kind": "public_documentation",
+      "text": "The OpenTelemetry Demo is a microservice application used to demonstrate and learn telemetry instrumentation, collection, and visualization."
+    },
+    {
+      "source_id": "otel-feature-flags-docs",
+      "source_version": "docs@2026-09-13",
+      "title": "OpenTelemetry Demo feature flag scenario",
+      "url": "https://opentelemetry.io/docs/demo/feature-flags/",
+      "citation": "OpenTelemetry Demo feature flag scenario, docs@2026-09-13",
+      "source_kind": "public_runbook_reference",
+      "text": "The feature flag scenario demonstrates evaluating a flag and observing the resulting application behavior through telemetry."
+    },
+    {
+      "source_id": "incident-lens-evidence-guidance",
+      "source_version": "knowledge@2026-09-14",
+      "title": "Incident Lens evidence guidance",
+      "url": "data/knowledge/verified-runbooks-v1.json#incident-lens-evidence-guidance",
+      "citation": "Incident Lens evidence guidance, knowledge@2026-09-14",
+      "source_kind": "reviewed_prior_knowledge",
+      "text": "A bounded investigation should compare logs, metrics, and traces in the same time window, preserve missing-signal warnings, and avoid treating a release timestamp as causal proof."
+    }
+  ]
+}

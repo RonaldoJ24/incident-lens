@@ -132,6 +132,7 @@ class TimelineList(StrictModel):
 class ReviewRequest(StrictModel):
     action: Literal["accept", "correct", "challenge", "withhold_source"]
     note: str = Field(default="", max_length=1000)
+    source_ids: List[str] = Field(default_factory=list, max_length=20)
 
 
 class Correction(StrictModel):
@@ -142,6 +143,24 @@ class Correction(StrictModel):
     created_at: datetime
     context_preserved: Literal[True]
     follow_up_run_id: Optional[str] = None
+    source_ids: List[str] = Field(default_factory=list)
+
+
+class WorkflowRequest(StrictModel):
+    query: str = Field(min_length=1, max_length=500)
+    resume: bool = True
+    cancel: bool = False
+
+
+class WorkflowResponse(StrictModel):
+    run_id: str
+    status: Literal["queued", "running", "paused", "completed", "cancelled", "failed"]
+    checkpoint_id: str
+    retrieval_hits: List[Dict[str, object]]
+    claims: List[Dict[str, object]]
+    evidence_ids: List[str]
+    report_id: Optional[str] = None
+    error: Optional[str] = None
 
 
 class ReportCreate(StrictModel):
@@ -177,3 +196,10 @@ class UploadValidation(StrictModel):
     validation: Literal["accepted", "invalid", "incomplete", "duplicate", "conflicting"]
     telemetry_origin: Literal["guest_upload"]
     messages: List[str]
+    record_count: int = Field(default=0, ge=0)
+    duplicate_count: int = Field(default=0, ge=0)
+    conflict_count: int = Field(default=0, ge=0)
+    missing_signals: List[str] = Field(default_factory=list)
+    missing_signal_count: int = Field(default=0, ge=0)
+    untrusted_record_count: int = Field(default=0, ge=0)
+    expires_at: Optional[datetime] = None

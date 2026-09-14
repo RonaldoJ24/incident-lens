@@ -46,7 +46,7 @@ class ContractValidationTests(unittest.TestCase):
             for operation in path.values()
             if isinstance(operation, dict) and "operationId" in operation
         }
-        self.assertTrue({"listFindings", "listEvidence", "listTimelineEvents", "reviewFinding", "exportReport"} <= operations)
+        self.assertTrue({"listFindings", "listEvidence", "listTimelineEvents", "reviewFinding", "exportReport", "runInvestigationWorkflow"} <= operations)
 
     def test_api_path_templates_have_required_string_parameters(self):
         api = json.loads((ROOT / "contracts/v1/api.openapi.json").read_text())

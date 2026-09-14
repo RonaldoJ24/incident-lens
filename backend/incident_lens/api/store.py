@@ -117,6 +117,13 @@ class StateStore:
                   idempotency_key TEXT,
                   UNIQUE(session_id, idempotency_key)
                 );
+                CREATE TABLE IF NOT EXISTS workflow_checkpoints (
+                  run_id TEXT PRIMARY KEY REFERENCES runs(run_id),
+                  checkpoint_id TEXT NOT NULL,
+                  state_json TEXT NOT NULL,
+                  status TEXT NOT NULL,
+                  updated_at TEXT NOT NULL
+                );
                 """
             )
             self.connection.commit()
@@ -272,6 +279,33 @@ class StateStore:
 
     def list_corrections(self, run_id: str) -> List[Dict[str, Any]]:
         return self._payloads("corrections", run_id)
+
+    def list_withheld_source_ids(self, run_id: str) -> List[str]:
+        withheld: List[str] = []
+        for correction in self.list_corrections(run_id):
+            if correction.get("action") == "withhold_source":
+                withheld.extend(correction.get("source_ids", []))
+        return sorted(set(withheld))
+
+    def save_checkpoint(self, run_id: str, checkpoint_id: str, state: Dict[str, Any], status: str) -> Dict[str, Any]:
+        updated_at = iso(utc_now())
+        with self.lock:
+            self.connection.execute(
+                """INSERT INTO workflow_checkpoints(run_id,checkpoint_id,state_json,status,updated_at)
+                VALUES (?,?,?,?,?)
+                ON CONFLICT(run_id) DO UPDATE SET checkpoint_id=excluded.checkpoint_id,
+                  state_json=excluded.state_json,status=excluded.status,updated_at=excluded.updated_at""",
+                (run_id, checkpoint_id, json_text(state), status, updated_at),
+            )
+            self.connection.commit()
+        return {"run_id": run_id, "checkpoint_id": checkpoint_id, "state": state, "status": status, "updated_at": updated_at}
+
+    def get_checkpoint(self, run_id: str) -> Optional[Dict[str, Any]]:
+        with self.lock:
+            row = self.connection.execute("SELECT * FROM workflow_checkpoints WHERE run_id = ?", (run_id,)).fetchone()
+        if not row:
+            return None
+        return {"run_id": row["run_id"], "checkpoint_id": row["checkpoint_id"], "state": parse_json(row["state_json"]), "status": row["status"], "updated_at": row["updated_at"]}
 
     def save_report(self, session_id: str, run_id: str, provenance: Dict[str, Any], finding_ids: List[str], idempotency_key: Optional[str]) -> Dict[str, Any]:
         with self.lock:
@@ -494,6 +528,32 @@ class PostgresStateStore:
 
     def list_corrections(self, run_id: str) -> List[Dict[str, Any]]:
         return self._payloads("corrections", run_id)
+
+    def list_withheld_source_ids(self, run_id: str) -> List[str]:
+        withheld: List[str] = []
+        for correction in self.list_corrections(run_id):
+            if correction.get("action") == "withhold_source":
+                withheld.extend(correction.get("source_ids", []))
+        return sorted(set(withheld))
+
+    def save_checkpoint(self, run_id: str, checkpoint_id: str, state: Dict[str, Any], status: str) -> Dict[str, Any]:
+        updated_at = utc_now()
+        with self.lock, self.connection.transaction():
+            self.connection.execute(
+                """INSERT INTO workflow_checkpoints(run_id,checkpoint_id,state_json,status,updated_at)
+                VALUES (%s,%s,%s,%s,%s)
+                ON CONFLICT (run_id) DO UPDATE SET checkpoint_id=EXCLUDED.checkpoint_id,
+                  state_json=EXCLUDED.state_json,status=EXCLUDED.status,updated_at=EXCLUDED.updated_at""",
+                (run_id, checkpoint_id, self._Jsonb(state), status, updated_at),
+            )
+        return {"run_id": run_id, "checkpoint_id": checkpoint_id, "state": state, "status": status, "updated_at": iso(updated_at)}
+
+    def get_checkpoint(self, run_id: str) -> Optional[Dict[str, Any]]:
+        with self.lock, self.connection.transaction():
+            row = self.connection.execute("SELECT * FROM workflow_checkpoints WHERE run_id = %s", (run_id,)).fetchone()
+        if not row:
+            return None
+        return {"run_id": row["run_id"], "checkpoint_id": row["checkpoint_id"], "state": parse_json(row["state_json"]), "status": row["status"], "updated_at": iso(row["updated_at"])}
 
     def save_report(self, session_id: str, run_id: str, provenance: Dict[str, Any], finding_ids: List[str], idempotency_key: Optional[str]) -> Dict[str, Any]:
         report_id = "report-" + uuid.uuid4().hex[:12]

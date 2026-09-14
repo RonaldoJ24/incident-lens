@@ -51,7 +51,7 @@ def _safe_artifact_path(path: Path, value: str) -> Path:
 def _assert_no_private_fields(value: Any, path: str = "artifact") -> None:
     if isinstance(value, Mapping):
         for key, child in value.items():
-            if key == "ranking_semantics":
+            if key in {"ranking_semantics", "target_semantics"}:
                 continue
             if _LEAK.search(str(key)):
                 raise ArtifactError("artifact contains prohibited private field(s)")
@@ -134,6 +134,7 @@ def write_artifact(
     validation_rows: int,
     reason: str,
     model: Optional[Any] = None,
+    selection_metrics: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Write a deterministic artifact manifest and optional model bytes."""
 
@@ -178,6 +179,8 @@ def write_artifact(
     if model_path is not None:
         document["model_path"] = model_path
         document["model_sha256"] = model_hash
+    if selection_metrics is not None:
+        document["selection_metrics"] = dict(selection_metrics)
     document["artifact_sha256"] = manifest_digest(document)
     output.write_text(_canonical(document) + "\n", encoding="utf-8")
     verify_artifact(output)

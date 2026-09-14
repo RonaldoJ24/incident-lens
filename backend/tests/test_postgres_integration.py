@@ -33,7 +33,7 @@ class PostgresIntegrationTests(unittest.TestCase):
         rows = self.store.connection.execute(
             "SELECT version, name FROM incident_lens_schema_migrations ORDER BY version"
         ).fetchall()
-        self.assertEqual([row["version"] for row in rows], [1, 2])
+        self.assertEqual([row["version"] for row in rows], [1, 2, 3])
 
         with patch.dict(os.environ, {"INCIDENT_LENS_DATABASE_URL": self.url}):
             selected = create_app()

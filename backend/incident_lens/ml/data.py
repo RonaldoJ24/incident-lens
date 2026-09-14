@@ -31,6 +31,8 @@ def canonical_json(value: Any) -> str:
 def document_hash(document: Mapping[str, Any]) -> str:
     without = dict(document)
     without.pop("manifest_sha256", None)
+    # Execution time is provenance, not deterministic content identity.
+    without.pop("generated_at", None)
     return hashlib.sha256(canonical_json(without).encode("utf-8")).hexdigest()
 
 

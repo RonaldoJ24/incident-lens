@@ -4,7 +4,8 @@
 
 **Understand what failed, see the evidence, and continue the investigation.**
 
-> **Status: Phase 1 local slice in progress; Phase 2 source work complete.** The
+> **Status: Phase 4 local retrieval/workflow slice in progress; Phase 2 source
+> work and Phase 3 artifact work are recorded.** The
 > repository contains a runnable React/TypeScript and FastAPI/Pydantic slice
 > over a small authored fixture, plus a pinned, leakage-safe RCAEval per-case
 > adapter and deterministic offline normalization. PostgreSQL persistence,

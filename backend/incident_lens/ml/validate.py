@@ -9,8 +9,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
 
 from .artifacts import ArtifactError, load_model
-from .data import ManifestPolicyError, assert_disjoint_groups, load_manifest
-from .ranking import RANKING_SEMANTICS, rank_rows, rule_scores
+from .data import ManifestPolicyError, assert_disjoint_groups, load_manifest, source_hash
+from .metrics import ranking_metrics
+from .ranking import RANKING_SEMANTICS, rank_rows
+from .targets import ReviewTargetError, load_review_targets
 
 
 def _write_report(path: Path, report: Mapping[str, Any]) -> None:
@@ -24,6 +26,7 @@ def validate_manifest(
     *,
     train_manifest_path: Optional[Path] = None,
     report_path: Optional[Path] = None,
+    review_targets_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     document, rows = load_manifest(Path(manifest_path), "validation")
     if train_manifest_path is None:
@@ -37,6 +40,9 @@ def validate_manifest(
     artifact, model = load_model(Path(artifact_path))
     model_rank = rank_rows(rows, model)
     baseline_rank = rank_rows(rows)
+    targets = load_review_targets(review_targets_path) if review_targets_path is not None else load_review_targets()
+    selected_metrics = ranking_metrics(model_rank, targets) if targets is not None else None
+    baseline_metrics = ranking_metrics(baseline_rank, targets) if targets is not None else None
     missing = Counter()
     conflict_count = 0
     for row in rows:
@@ -56,6 +62,9 @@ def validate_manifest(
     )
     if model_method == "isolation_forest":
         comparison_reason = "Model scores and rule scores are emitted for comparison; no target labels were opened."
+    if selected_metrics is not None:
+        comparison_status = "measured"
+        comparison_reason = "Private reviewer targets identify event windows only; they do not identify a failing service or root cause."
     model_scores = [item["unusual_score"] for item in model_rank]
     baseline_scores = [item["unusual_score"] for item in baseline_rank]
     report: Dict[str, Any] = {
@@ -77,15 +86,16 @@ def validate_manifest(
             "feature_schema_version": artifact["feature_schema_version"],
             "source": artifact.get("source", {}),
             "artifact_sha256": artifact["artifact_sha256"],
+            "validation_manifest_sha256": source_hash(document),
         },
         "metrics": {
             "event_detection": "not measured",
             "false_alarm_rate": "not measured",
-            "ranking": {"ndcg_at_5": "not measured", "mrr": "not measured"},
+            "ranking": {"event_window_ndcg_at_5": "not measured", "event_window_mrr": "not measured"},
             "anomaly": {
                 "event_detection": "not measured",
                 "false_alarm_rate": "not measured",
-                "ranking": {"ndcg_at_5": "not measured", "mrr": "not measured"},
+                "ranking": {"event_window_ndcg_at_5": "not measured", "event_window_mrr": "not measured"},
             },
             "complete_investigation": {
                 "failing_service_identification": "not measured",
@@ -114,7 +124,7 @@ def validate_manifest(
             },
         },
         "error_analysis": {
-            "false_alarms": "not measured: no reviewed event targets",
+            "false_alarms": selected_metrics["event_detection"]["false_positive"] if selected_metrics and selected_metrics.get("status") == "measured" else "not measured: no reviewed event-window targets",
             "missing_signals": dict(sorted(missing.items())),
             "conflicting_signals": conflict_count,
             "unseen_services": len(unseen_services),
@@ -123,10 +133,31 @@ def validate_manifest(
         },
         "limitations": [
             "Public manifests intentionally contain no hidden labels, source filenames, injection times, or per-case ground truth.",
+            "Reviewer targets identify event windows only; failing-service identification and root-cause quality are not measured.",
             "Final held-out data is sealed and was not opened by this phase.",
             "Complete-investigation quality and statistical significance are not measured.",
         ],
     }
+    if train_document is not None:
+        report["versions"]["train_manifest_sha256"] = source_hash(train_document)
+    if selected_metrics is not None and selected_metrics.get("status") == "measured":
+        report["status"] = "measured_event_window_only"
+        report["metrics"]["event_detection"] = selected_metrics["event_detection"]
+        report["metrics"]["false_alarm_rate"] = selected_metrics["false_alarm_rate"]
+        report["metrics"]["ranking"] = selected_metrics["ranking"]
+        report["metrics"]["anomaly"] = {
+            "event_detection": selected_metrics["event_detection"],
+            "false_alarm_rate": selected_metrics["false_alarm_rate"],
+            "ranking": selected_metrics["ranking"],
+        }
+        report["comparison"]["model_metrics"] = selected_metrics if model_method == "isolation_forest" else baseline_metrics
+        report["comparison"]["selected_method_metrics"] = selected_metrics
+        report["comparison"]["rules_metrics"] = baseline_metrics
+        if artifact.get("selection_metrics") is not None:
+            report["comparison"]["selection_metrics"] = artifact["selection_metrics"]
+        report["comparison"]["target_semantics"] = "reviewed event-window target; not a failing-service or root-cause label"
+    elif artifact.get("selection_metrics") is not None:
+        report["comparison"]["selection_metrics"] = artifact["selection_metrics"]
     if report_path is not None:
         _write_report(Path(report_path), report)
     return report
@@ -138,10 +169,11 @@ def main() -> None:
     parser.add_argument("--artifact", type=Path, default=Path("docs/evaluation/phase3-artifact-manifest.json"))
     parser.add_argument("--train-manifest", type=Path)
     parser.add_argument("--report", type=Path, default=Path("reports/generated/phase3-validation.json"))
+    parser.add_argument("--review-targets", type=Path)
     args = parser.parse_args()
     try:
-        report = validate_manifest(args.manifest, args.artifact, train_manifest_path=args.train_manifest, report_path=args.report)
-    except (ManifestPolicyError, ArtifactError, ValueError) as exc:
+        report = validate_manifest(args.manifest, args.artifact, train_manifest_path=args.train_manifest, report_path=args.report, review_targets_path=args.review_targets)
+    except (ManifestPolicyError, ArtifactError, ReviewTargetError, ValueError) as exc:
         parser.error(str(exc))
     print("validated %s: status=%s rows=%d report=%s" % (args.manifest, report["status"], report["case_counts"]["validation_rows"], args.report))
 

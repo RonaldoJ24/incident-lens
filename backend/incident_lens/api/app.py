@@ -1,9 +1,10 @@
 """FastAPI application for the local Phase 1 investigation slice."""
 
 import atexit
-import json
 import uuid
 from datetime import datetime
+from pathlib import Path
+from threading import Event
 from typing import Any, Dict, Optional
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Request
@@ -27,9 +28,15 @@ from incident_lens.api.models import (
     TimelineEvent,
     TimelineList,
     UploadValidation,
+    WorkflowRequest,
+    WorkflowResponse,
 )
+from incident_lens.connectors import connector_status
 from incident_lens.api.store import iso, parse_json, select_store, utc_now
+from incident_lens.retrieval import HybridRetriever, KnowledgeIndex
+from incident_lens.uploads import SAMPLE_JSONL, UploadManager
 from incident_lens.worker.runner import BoundedInvestigationRunner
+from incident_lens.workflow import InvestigationWorkflow
 
 
 def metadata() -> Dict[str, str]:
@@ -81,9 +88,11 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
 
     store.seed_cases(load_cases())
     runner = BoundedInvestigationRunner(store)
+    upload_manager = UploadManager()
     app = FastAPI(title="Incident Lens API", version=CONTRACT_VERSION)
     app.state.store = store
     app.state.runner = runner
+    app.state.uploads = upload_manager
 
     def owned_run(run_id: str, session_id: Optional[str]) -> Dict[str, Any]:
         run = store.get_run(run_id)
@@ -189,6 +198,18 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
         owned_run(run_id, x_session_id)
         return TimelineList(events=[TimelineEvent(**item) for item in store.list_timeline(run_id)])
 
+    @app.post("/v1/runs/{run_id}/workflow", response_model=WorkflowResponse, status_code=202)
+    def run_workflow(run_id: str, request: WorkflowRequest, x_session_id: Optional[str] = Header(default=None, alias="X-Session-ID")) -> WorkflowResponse:
+        owned_run(run_id, x_session_id)
+        index_path = Path(__file__).resolve().parents[3] / "data" / "knowledge" / "verified-runbooks-v1.json"
+        workflow = InvestigationWorkflow(store, HybridRetriever(KnowledgeIndex.from_manifest(index_path)))
+        cancel_event = Event()
+        if request.cancel:
+            cancel_event.set()
+        state = workflow.run(run_id, x_session_id or "", request.query, resume=request.resume, cancel_event=cancel_event)
+        checkpoint = store.get_checkpoint(run_id)
+        return WorkflowResponse(run_id=run_id, status=state["status"], checkpoint_id=checkpoint["checkpoint_id"] if checkpoint else workflow.REVISION, retrieval_hits=state.get("retrieval_hits", []), claims=state.get("claims", []), evidence_ids=state.get("evidence_ids", []), report_id=state.get("report_id"), error=state.get("error"))
+
     @app.get("/v1/runs/{run_id}/corrections", response_model=list[Correction])
     def get_corrections(run_id: str, x_session_id: Optional[str] = Header(default=None, alias="X-Session-ID")) -> list[Correction]:
         owned_run(run_id, x_session_id)
@@ -197,8 +218,17 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
     @app.post("/v1/runs/{run_id}/review", response_model=Correction, status_code=202)
     def review_run(run_id: str, request: ReviewRequest, x_session_id: Optional[str] = Header(default=None, alias="X-Session-ID")) -> Correction:
         owned_run(run_id, x_session_id)
+        source_ids = list(request.source_ids)
+        if request.action == "withhold_source" and not source_ids:
+            source_ids = [item["source"]["source_id"] for item in store.list_evidence(run_id) if item.get("source_type") in {"runbook", "prior_knowledge"}]
+            if not source_ids:
+                raise HTTPException(status_code=409, detail="No retrieved knowledge source is available to withhold")
         if request.action == "withhold_source":
-            raise HTTPException(status_code=409, detail="Source withholding is planned for Phase 4; no source was withheld.")
+            knowledge = [item for item in store.list_evidence(run_id) if item.get("source_type") in {"runbook", "prior_knowledge"}]
+            available = {item["evidence_id"] for item in knowledge} | {item["source"]["source_id"] for item in knowledge}
+            if not set(source_ids) <= available:
+                raise HTTPException(status_code=404, detail="Requested source is not present in this run")
+            source_ids = [item["source"]["source_id"] if item["evidence_id"] in source_ids else item["source"]["source_id"] for item in knowledge if item["evidence_id"] in source_ids or item["source"]["source_id"] in source_ids]
         correction = {
             "correction_id": "correction-" + uuid.uuid4().hex[:12],
             "run_id": run_id,
@@ -206,6 +236,7 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
             "note": request.note,
             "created_at": iso(utc_now()),
             "context_preserved": True,
+            "source_ids": source_ids,
         }
         store.insert_correction(run_id, correction)
         store.insert_timeline(
@@ -217,7 +248,7 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
                 "state": "succeeded",
                 "started_at": correction["created_at"],
                 "ended_at": correction["created_at"],
-                "scope": {"operation": "record_review", "read_only": True},
+                "scope": {"operation": "record_review", "read_only": True, "parameters": {"action": request.action, "source_ids": source_ids}},
                 "evidence_ids": [],
                 "duration_ms": 0,
                 "error_code": None,
@@ -255,6 +286,7 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
         report = store.get_report(report_id)
         if not report or report["session_id"] != x_session_id:
             raise HTTPException(status_code=404, detail="Report not found")
+        checkpoint = store.get_checkpoint(report["run_id"])
         return JSONResponse(
             content={
                 "report": _report_payload(report).model_dump(mode="json"),
@@ -262,39 +294,84 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
                 "findings": store.list_findings(report["run_id"]),
                 "evidence": store.list_evidence(report["run_id"]),
                 "timeline": store.list_timeline(report["run_id"]),
+                "workflow": checkpoint.get("state") if checkpoint else None,
             },
             headers={"Content-Disposition": 'attachment; filename="incident-lens-%s-r%d.json"' % (report_id, report["revision"])},
         )
+
+    @app.get("/v1/uploads/sample", response_class=Response)
+    def download_upload_sample() -> Response:
+        return Response(
+            content=SAMPLE_JSONL,
+            media_type="application/jsonl",
+            headers={"Content-Disposition": 'attachment; filename="incident-lens-sample.jsonl"'},
+        )
+
+    @app.post("/v1/uploads/initiate", response_model=UploadValidation, status_code=201)
+    def initiate_upload(x_session_id: Optional[str] = Header(default=None, alias="X-Session-ID")) -> UploadValidation:
+        if not x_session_id or not store.session_exists(x_session_id):
+            raise HTTPException(status_code=404, detail="Session not found")
+        upload_id = upload_manager.begin(x_session_id)
+        result = upload_manager.get(x_session_id, upload_id)
+        return UploadValidation(**(result.response() if result else {
+            "upload_id": upload_id,
+            "session_id": x_session_id,
+            "content_type": "application/jsonl",
+            "byte_size": 0,
+            "validation": "incomplete",
+            "telemetry_origin": "guest_upload",
+            "messages": ["upload initiated"],
+        }))
 
     @app.post("/v1/uploads", response_model=UploadValidation)
     async def validate_upload(request: Request, x_session_id: Optional[str] = Header(default=None, alias="X-Session-ID")) -> UploadValidation:
         if not x_session_id or not store.session_exists(x_session_id):
             raise HTTPException(status_code=404, detail="Session not found")
-        body = await request.body()
         content_type = request.headers.get("content-type", "").split(";", 1)[0]
-        messages = []
-        if content_type != "application/jsonl":
-            messages.append("content-type must be application/jsonl")
-        if len(body) > 10 * 1024 * 1024:
-            messages.append("upload exceeds 10 MiB")
+        upload_id = upload_manager.begin(x_session_id)
+        result = await upload_manager.validate(x_session_id, upload_id, content_type, request.stream())
+        return UploadValidation(**result.response())
+
+    @app.put("/v1/uploads/{upload_id}", response_model=UploadValidation)
+    async def stream_upload(upload_id: str, request: Request, x_session_id: Optional[str] = Header(default=None, alias="X-Session-ID")) -> UploadValidation:
+        if not x_session_id:
+            raise HTTPException(status_code=404, detail="Upload not found")
+        if not upload_manager.get(x_session_id, upload_id):
+            raise HTTPException(status_code=404, detail="Upload not found")
+        content_type = request.headers.get("content-type", "").split(";", 1)[0]
         try:
-            lines = [line for line in body.decode("utf-8").splitlines() if line.strip()]
-            for line in lines:
-                if not isinstance(json.loads(line), dict):
-                    messages.append("every JSONL line must be an object")
-                    break
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            messages.append("body must be valid JSONL")
-        validation = "accepted" if not messages else "invalid"
-        return UploadValidation(
-            upload_id="upload-" + uuid.uuid4().hex[:12],
-            session_id=x_session_id,
-            content_type="application/jsonl",
-            byte_size=len(body),
-            validation=validation,
-            telemetry_origin="guest_upload",
-            messages=messages,
-        )
+            result = await upload_manager.validate(x_session_id, upload_id, content_type, request.stream())
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Upload not found") from exc
+        return UploadValidation(**result.response())
+
+    @app.get("/v1/uploads/{upload_id}", response_model=UploadValidation)
+    def get_upload(upload_id: str, x_session_id: Optional[str] = Header(default=None, alias="X-Session-ID")) -> UploadValidation:
+        if not x_session_id:
+            raise HTTPException(status_code=404, detail="Upload not found")
+        result = upload_manager.get(x_session_id, upload_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Upload not found")
+        return UploadValidation(**result.response())
+
+    @app.delete("/v1/uploads/{upload_id}", response_model=UploadValidation)
+    def cancel_upload(upload_id: str, x_session_id: Optional[str] = Header(default=None, alias="X-Session-ID")) -> UploadValidation:
+        if not x_session_id or not upload_manager.cancel(x_session_id, upload_id):
+            raise HTTPException(status_code=404, detail="Upload not found")
+        result = upload_manager.get(x_session_id, upload_id)
+        return UploadValidation(**(result.response() if result else {
+            "upload_id": upload_id,
+            "session_id": x_session_id,
+            "content_type": "application/jsonl",
+            "byte_size": 0,
+            "validation": "incomplete",
+            "telemetry_origin": "guest_upload",
+            "messages": ["upload cancelled"],
+        }))
+
+    @app.get("/v1/connectors/status")
+    def get_connector_status() -> Dict[str, Any]:
+        return connector_status().as_dict()
 
     return app
 

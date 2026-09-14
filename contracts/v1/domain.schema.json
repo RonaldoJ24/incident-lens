@@ -176,7 +176,8 @@
         "action": { "enum": ["accept", "correct", "challenge", "withhold_source"] },
         "note": { "type": "string" },
         "created_at": { "type": "string", "format": "date-time" },
-        "context_preserved": { "const": true }
+        "context_preserved": { "const": true },
+        "source_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
       },
       "additionalProperties": false
     },
@@ -204,7 +205,15 @@
         "content_type": { "const": "application/jsonl" },
         "byte_size": { "type": "integer", "minimum": 0, "maximum": 10485760 },
         "validation": { "enum": ["accepted", "invalid", "incomplete", "duplicate", "conflicting"] },
-        "telemetry_origin": { "const": "guest_upload" }
+        "telemetry_origin": { "const": "guest_upload" },
+        "messages": { "type": "array", "items": { "type": "string" } },
+        "record_count": { "type": "integer", "minimum": 0 },
+        "duplicate_count": { "type": "integer", "minimum": 0 },
+        "conflict_count": { "type": "integer", "minimum": 0 },
+        "missing_signals": { "type": "array", "items": { "type": "string" } },
+        "missing_signal_count": { "type": "integer", "minimum": 0 },
+        "untrusted_record_count": { "type": "integer", "minimum": 0 },
+        "expires_at": { "type": ["string", "null"], "format": "date-time" }
       },
       "additionalProperties": false
     }

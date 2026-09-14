@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import UploadPanel from "./UploadPanel";
 
 type PreviewState = "empty" | "loading" | "running" | "partial" | "successful" | "unresolved" | "failed" | "cached" | "upload-invalid" | "upload-accepted" | "saved" | "export-failed";
 type CaseItem = {
@@ -84,13 +85,22 @@ function App() {
     setState(nextRun.status === "partial" ? "partial" : nextRun.status === "succeeded" ? "successful" : nextRun.status === "cancelled" ? "failed" : "running");
   };
 
+  const runWorkflow = async (runId: string, resume = true) => {
+    if (!sessionId) return;
+    const response = await fetch(`/v1/runs/${runId}/workflow`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ query: `${selectedCase.title} ${selectedCase.description}`, resume }) });
+    if (!response.ok) throw new Error("Workflow failed");
+  };
+
   const runCheck = async () => {
     if (!canRun || !sessionId || !windowStart || !windowEnd) return;
     setState("running");
     try {
       const response = await fetch("/v1/runs", { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": `ui-${selectedCaseId}-${Date.now()}` }, body: JSON.stringify({ session_id: sessionId, case_id: selectedCaseId, service: selectedCase.service, window_start: apiTimestamp(windowStart), window_end: apiTimestamp(windowEnd) }) });
       if (!response.ok) throw new Error("Run failed");
-      await refreshRun((await response.json() as { run_id: string }).run_id);
+      const runId = (await response.json() as { run_id: string }).run_id;
+      await refreshRun(runId);
+      await runWorkflow(runId);
+      await refreshRun(runId);
     } catch { setState("failed"); }
   };
 
@@ -103,9 +113,9 @@ function App() {
     } catch { setState("failed"); }
   };
 
-  const review = async (action: "accept" | "correct" | "challenge") => {
+  const review = async (action: "accept" | "correct" | "challenge" | "withhold_source") => {
     if (!canReview || !sessionId || !run) return;
-    try { const response = await fetch(`/v1/runs/${run.run_id}/review`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ action, note: "Review recorded in the current run context." }) }); if (!response.ok) throw new Error("Review failed"); await refreshRun(run.run_id); } catch { setState("failed"); }
+    try { const response = await fetch(`/v1/runs/${run.run_id}/review`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ action, note: "Review recorded in the current run context." }) }); if (!response.ok) throw new Error("Review failed"); if (action === "withhold_source") await runWorkflow(run.run_id, false); await refreshRun(run.run_id); } catch { setState("failed"); }
   };
 
   const saveExport = async () => {
@@ -138,10 +148,11 @@ function App() {
     <main id="investigate">
       <section className="context-bar" aria-labelledby="context-heading"><div><p className="eyebrow">Context</p><h1 id="context-heading">{selectedCase.title} <span>· authored fixture</span></h1><div className="provenance" aria-label="Independent run provenance"><span>Origin · {selectedCase.telemetry_origin}</span><span>Execution · {run?.provenance.execution ?? "new_analysis"}</span><span>{run ? `Run ${run.provenance.run_version} · ${run.provenance.run_time}` : "No run yet"}</span></div></div><div className="context-controls"><label>Example<select value={selectedCaseId} onChange={(event) => selectCase(event.target.value)} aria-label="Choose incident example">{cases.map((item) => <option key={item.case_id} value={item.case_id}>{item.title}</option>)}</select></label><label>Service<select value={selectedCase.service} disabled aria-label="Selected service"><option>{selectedCase.service}</option></select></label><div className="time-window-fields"><label htmlFor="window-start">Window start (UTC)</label><input ref={windowStartRef} id="window-start" type="datetime-local" value={windowStart} onChange={(event) => setWindowStart(event.target.value)} /></div><div className="time-window-fields"><label htmlFor="window-end">Window end (UTC)</label><input id="window-end" type="datetime-local" value={windowEnd} onChange={(event) => setWindowEnd(event.target.value)} /></div><button className="primary" type="button" disabled={state === "running" ? !run : !canRun} onClick={() => void (state === "running" ? cancelRun() : runCheck())}>{state === "running" ? "Cancel run" : "Run check"}</button></div></section>
       <div className="connection-row"><StatusMessage state={state} /><span className={`connection-note connection-${apiStatus}`} role={apiStatus === "unavailable" ? "alert" : "status"}>{apiStatus === "loading" ? "Connecting to local API…" : apiStatus === "ready" ? `Local API ready · ${run ? `run ${run.status}` : "no run has been executed"}` : "API unavailable · run, review, and export controls are disabled"}</span></div>
+      <UploadPanel sessionId={sessionId} onState={setState} />
       <div className="workspace-grid"><section className="findings-panel" aria-labelledby="finding-heading"><div className="panel-heading"><p className="eyebrow">Finding</p><span className="certainty uncertain">{finding?.certainty ?? "Awaiting run"}</span></div><h2 id="finding-heading">{findingHeading}</h2><p className="finding-copy">{finding?.assessment ?? selectedCase.description}</p>{finding && <p className="small-copy">This is an unusual service/window ranking linked to bounded evidence, not a root-cause probability. It does not prove causality.</p>}<div className="checks"><p className="eyebrow">Next useful checks <span className="small-copy">· suggestions only</span></p><ul className="suggested-checks">{(finding?.next_checks ?? ["Inspect trace interval for downstream errors", "Compare the adjacent baseline window"]).map((check) => <li key={check}>{check}</li>)}</ul></div><p className="quiet-note">Finding IDs stay linked to their evidence, even when the diagnosis is unresolved.</p></section>
         <aside className={`evidence-panel ${evidenceOpen ? "open" : "closed"}`} aria-labelledby="evidence-heading"><div className="panel-heading"><p className="eyebrow">Evidence drawer</p><button className="icon-button" type="button" aria-expanded={evidenceOpen} onClick={() => setEvidenceOpen(!evidenceOpen)}>{evidenceOpen ? "Hide" : "Show"}</button></div>{evidenceOpen && <div><h2 id="evidence-heading">What supports this?</h2>{evidence.length ? evidence.map((item) => <div className="evidence-item" key={item.evidence_id}><p className="eyebrow">{item.source_type} · authored fixture</p><code>{item.evidence_id} · {item.event_time}</code><p className="small-copy">{item.content_or_summary} {item.quality_flags.length ? `(${item.quality_flags.join(", ")})` : ""}</p></div>) : <><p className="eyebrow">Awaiting a run</p><p className="small-copy">Evidence appears here only after the bounded worker returns it. No supporting passage retrieved yet.</p></>}</div>}</aside></div>
       <details className="timeline"><summary><span><span className="eyebrow">Execution timeline</span> {timeline.length ? `${timeline.length} actual event(s)` : "No run executed"}</span><span className="timeline-meta">{timeline.length ? "read-only · inspect details" : "collapsed"}</span></summary>{timeline.length ? timeline.map((event) => <div className="timeline-detail" key={event.event_id}><code>{event.scope.operation}</code><span>{event.state}</span><span>{event.duration_ms} ms</span><span>{event.scope.read_only ? "read-only" : "scope unknown"}</span><span>{event.evidence_ids.length} evidence</span><code>params: {JSON.stringify(event.scope.parameters ?? {})}</code></div>) : <div className="timeline-detail">Run a case to record actual tool calls, parameters, evidence, retries, and failures.</div>}</details>
-      <section className="review-bar" aria-label="Review actions"><button type="button" disabled={!canReview} onClick={() => void review("accept")}>Accept finding</button><button type="button" disabled={!canReview} onClick={() => void review("correct")}>Correct</button><button type="button" disabled={!canReview} onClick={() => void review("challenge")}>Challenge</button><button type="button" disabled title="Unavailable until the Phase 4 source-withholding workflow is implemented">Withhold source · unavailable (Phase 4)</button><button type="button" onClick={() => windowStartRef.current?.focus()}>Change window</button><button type="button" disabled={!canRun} onClick={() => void runCheck()}>Re-run</button><button className="primary" type="button" disabled={!canSave} onClick={() => void saveExport()}>Save / export</button></section>
+      <section className="review-bar" aria-label="Review actions"><button type="button" disabled={!canReview} onClick={() => void review("accept")}>Accept finding</button><button type="button" disabled={!canReview} onClick={() => void review("correct")}>Correct</button><button type="button" disabled={!canReview} onClick={() => void review("challenge")}>Challenge</button><button type="button" disabled={!canReview || !evidence.some((item) => item.source_type === "runbook" || item.source_type === "prior_knowledge")} title="Withholds retrieved knowledge sources from the next workflow context" onClick={() => void review("withhold_source")}>Withhold retrieved sources</button><button type="button" onClick={() => windowStartRef.current?.focus()}>Change window</button><button type="button" disabled={!canRun} onClick={() => void runCheck()}>Re-run</button><button className="primary" type="button" disabled={!canSave} onClick={() => void saveExport()}>Save / export</button></section>
     </main><footer><span>Phase 1 local slice · authored fixture · contracts v1</span><span>Responsive review widths: 1440 · 1280 · 768 · 390 CSS px</span></footer>
   </div>;
 }

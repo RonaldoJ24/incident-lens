@@ -146,6 +146,25 @@ class ApiFlowTests(unittest.TestCase):
         self.assertEqual(final["status"], "partial")
         self.assertEqual(self.client.get("/v1/runs/%s/evidence" % run_id, headers={"X-Session-ID": second_session}).status_code, 404)
 
+    def test_phase4_workflow_retrieval_review_withholding_and_claim_export(self):
+        run_response = self.client.post("/v1/runs", json={"session_id": self.session_id, "case_id": "checkout-failure", "service": "checkoutservice"})
+        run_id = run_response.json()["run_id"]
+        workflow = self.client.post("/v1/runs/%s/workflow" % run_id, headers=self.headers, json={"query": "feature flag telemetry"})
+        self.assertEqual(workflow.status_code, 202)
+        self.assertEqual(workflow.json()["status"], "completed")
+        self.assertTrue(workflow.json()["retrieval_hits"][0]["citation"])
+        knowledge_source = workflow.json()["retrieval_hits"][0]["source_id"]
+        review = self.client.post("/v1/runs/%s/review" % run_id, headers=self.headers, json={"action": "withhold_source", "source_ids": [knowledge_source]})
+        self.assertEqual(review.status_code, 202)
+        self.assertEqual(review.json()["source_ids"], [knowledge_source])
+        rerun = self.client.post("/v1/runs/%s/workflow" % run_id, headers=self.headers, json={"query": "feature flag telemetry", "resume": False})
+        self.assertEqual(rerun.status_code, 202)
+        self.assertNotIn(knowledge_source, {item["source_id"] for item in rerun.json()["retrieval_hits"]})
+        report = self.client.post("/v1/reports", headers={**self.headers, "Idempotency-Key": "phase4-export"}, json={"session_id": self.session_id, "run_id": run_id})
+        export = self.client.post("/v1/reports/%s/export" % report.json()["report_id"], headers=self.headers).json()
+        self.assertIn(export["workflow"]["claims"][0]["support"]["status"], {"unsupported", "uncertain"})
+        self.assertTrue(export["workflow"]["claims"][0]["evidence_ids"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,22 @@
+{
+  "report_version": "incident-lens-retrieval-evaluation-v1",
+  "status": "generated_by_test_fixture",
+  "retrieval": {
+    "method": "hybrid-lexical-tfidf-lsa-v1",
+    "queries": 3,
+    "recall_at_k": 1.0,
+    "mrr": 1.0,
+    "k": 3
+  },
+  "claim_support": {
+    "method": "lexical-support-v1",
+    "supported_claim_example": "The feature flag scenario demonstrates evaluating a flag and observing application behavior through telemetry.",
+    "unsupported_claim_example": "This release caused the incident.",
+    "unsupported_claim_status": "unsupported"
+  },
+  "limitations": [
+    "The report uses three reviewed local queries and summaries, not benchmark telemetry.",
+    "TF-IDF/LSA is a deterministic local semantic fallback; no hosted model or live retrieval provider was called."
+  ],
+  "raw_data_in_repo": false
+}

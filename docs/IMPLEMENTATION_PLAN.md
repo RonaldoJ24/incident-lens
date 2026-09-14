@@ -27,8 +27,8 @@ attribution, redistribution, and derived-artifact terms before data is reused.
 | 1 | Local SQLite API, authored fixture worker, React Investigate shell, PostgreSQL adapter, ordered migrations, compose setup, CI integration workflow, API flow tests, and four-width browser review (evidence record below) | PostgreSQL runtime verification in the required CI workflow | Docker and PostgreSQL are unavailable on this host; the workflow is added but has not run from this checkout |
 | 2 | Pinned per-case source adapter, portable/Spark deterministic normalization, separate controlled-runtime schema, artifact layout, one reviewed real-case quality report, and passing Spark CI (evidence record below) | Phase 3 quality-reviewed training/validation inputs | Eleven selected development cases still have unknown completeness; PostgreSQL runtime verification remains the Phase 1 CI gate |
 | 3 | Leakage-safe grouped train/validation manifests, deterministic rules artifact, sealed-test policy, and aggregate report (model comparison not measured) | Additional quality-reviewed independent runs for model/rule evaluation | Only one reviewed development run is available; final held-out data remains sealed |
-| 4 | None | Persistent workflow state, source metadata, and ranking output | Blocked by Phases 1–3; embedding/model provider remains unselected pending availability and evaluation |
-| 5 | None | Evidence workflow and upload/source contracts | Blocked by Phases 2 and 4; owned-app target/access is an external decision, and pilot outreach requires explicit authorization |
+| 4 | Local deterministic hybrid retrieval, source/version citations, typed LangGraph workflow, durable checkpoints, review support, and hostile-log/source-withholding tests (evidence record below) | PostgreSQL runtime and browser workflow verification | Provider-backed retrieval, live connector, and production benchmark evidence remain unverified |
+| 5 | Bounded JSONL guest upload service, sample/status/cancel API, quota and provider replay policy, strict read-only connector boundary, local fixture/server tests (evidence record below) | Authorized owned-app endpoint/access and guest browser review | Owned endpoint and credentials are unavailable; connector remains blocked and pilot outreach requires explicit authorization |
 | 6 | None | Prior phases complete, except explicitly documented external blockers after independent work finishes | Deployment target, budget, credentials, and domain access remain open; final test stays sealed until tuning decisions are fixed |
 | 7 | None | Verified public deployment and Phase 6 evidence | Blocked by Phase 6; any unresolved owned-connector access must remain visible in the presentation |
 
@@ -273,7 +273,11 @@ Next gate: quality-review an independent development run and populate validation
 
 ## Phase 4 — RAG and persistent evidence workflow
 
-**Status:** Not started.
+**Status:** In progress — local deterministic retrieval, typed LangGraph
+workflow, evidence support evaluation, hostile-log handling, source
+withholding, checkpoint/restart/cancel/retry, and idempotent reports are
+implemented and locally tested. Provider-backed retrieval and PostgreSQL
+runtime evidence remain unverified.
 
 **Dependencies:** Phase 1 workflow state and Phase 2 source/version metadata;
 Phase 3 ranking output for a complete comparison.
@@ -305,9 +309,19 @@ Phase 3 ranking output for a complete comparison.
 - `uv run --project backend pytest -m recovery`
 - `pnpm --dir frontend e2e -- --scenario evidence-review`
 
+Evidence record 2026-09-14
+Status: in progress
+Changed paths: `backend/incident_lens/retrieval/`, `backend/incident_lens/evaluation/`, `backend/incident_lens/workflow/`, `backend/incident_lens/api/`, `backend/tests/test_phase4_workflow.py`, `backend/migrations/003_workflow_checkpoints.sql`, `data/knowledge/verified-runbooks-v1.json`, `data/manifests/retrieval.json`, `backend/incident_lens/fixtures/hostile_logs.json`, `docs/evaluation/phase4-retrieval-report.json`, `docs/evaluation/phase4-workflow-evidence.md`, `frontend/src/App.tsx`, `contracts/v1/api.openapi.json`
+Acceptance evidence: the normal run and checkpoint-resume paths invoke a compiled LangGraph with typed state; each successful node persists the correct next-node checkpoint before advancing, and a persisted time budget is checked before every node and on resume, recording bounded failure when exhausted; the small manual path is limited to cancellation/partial-stop control; allowlisted read-only fixture inspection, bounded retries and measured timeline durations are recorded; retrieval hits and generated claims carry source/version citations and support status; source withholding changes retrieval context; duplicate completed delivery reuses one report revision; hostile log content remains data and arbitrary shell/SQL is rejected
+Checks: `uv run --project backend python -m unittest discover -s backend/tests -v` — 62 passed, 3 PostgreSQL tests skipped because `INCIDENT_LENS_DATABASE_URL` is unset; `pnpm --dir frontend run lint && pnpm --dir frontend run typecheck && pnpm --dir frontend test && pnpm --dir frontend run build` — pass; `uv run --project backend python -m incident_lens.validation.manifests data/manifests` — pass (6); `uv run --project backend python -m incident_lens.pipeline.check_leakage data/manifests` — pass; `uv run --project backend python -m incident_lens.validation.local README.md docs backend contracts data .env.example frontend/src` — pass; `uv run --project backend python -m compileall -q backend/incident_lens` — pass; `uv lock --project backend --check` — pass; `git diff --check` — pass
+Known limitations/blockers: no provider-backed retrieval, Docker/PostgreSQL runtime, browser/e2e, or live connector evidence; generated fixture evaluation is not production evidence
+Next gate: verify PostgreSQL migration/runtime and browser workflow before calling Phase 4 complete
+
 ## Phase 5 — Guest testing, uploads, and owned live connector
 
-**Status:** Not started.
+**Status:** In progress — bounded guest upload validation, quota/policy helpers,
+and a strict read-only connector boundary are implemented and locally tested;
+owned-app access remains blocked.
 
 **Dependencies:** Phase 4 evidence workflow and Phase 2 upload/source contracts.
 
@@ -316,10 +330,11 @@ Phase 3 ranking output for a complete comparison.
 - Bounded JSONL upload flow with downloadable sample, schema validation,
   missing-signal report, size/type/retention limits, cancellation, and isolated
   guest state.
-- Exploratory pilot protocol for 3–5 willing engineers using matched tasks,
-  declared task order balance, sample size, task time, correctness, and
-  structured feedback. Results remain exploratory; no unsupported significance
-  or broad impact claim, and no outreach without explicit authorization.
+- [Exploratory pilot protocol](evaluation/phase5-pilot-protocol.md) for 3–5
+  willing engineers using matched tasks, a declared counterbalanced order,
+  exact timing/correctness rules, consent/privacy handling, and structured
+  feedback. Results remain exploratory; no unsupported significance or broad
+  impact claim, and no outreach without explicit authorization.
 - A real read-only connector to an owned maintained app. A stub does not satisfy
   this integration target. If credentials or external access are unavailable,
   record that specific blocker and continue independent work.
@@ -335,6 +350,15 @@ Phase 3 ranking output for a complete comparison.
   represented as competing origins.
 - Any connected-app result includes access time and source metadata; absent
   access remains an explicit outstanding blocker, not a completed integration.
+
+Evidence record 2026-09-14
+Status: in progress
+Changed paths: `backend/incident_lens/uploads.py`, `backend/incident_lens/connectors.py`, `backend/incident_lens/provider_policy.py`, `backend/incident_lens/api/app.py`, `backend/tests/fixtures/uploads/`, `backend/tests/test_phase5_uploads.py`, `backend/tests/test_phase5_connector.py`, `contracts/v1/api.openapi.json`, `contracts/v1/domain.schema.json`, `.env.example`, `docs/CONFIGURATION.md`, `docs/evaluation/phase5-pilot-protocol.md`
+Acceptance evidence: streamed JSONL validation enforces 10 MiB/256 KiB/10,000-record bounds, strict event fields, retention cleanup, per-session lookup/cancellation, duplicate/conflict/missing-signal/untrusted counts, and per-session byte/record/cost budgets; sample download and upload status/cancel endpoints are available; provider failure/replay decisions preserve `new_analysis` versus `stored_result`; `ReadOnlyConnector` permits bounded GET-only JSON through exact host allowlisting and returns source/version/access-time metadata; local controlled HTTP server tests are explicitly test evidence; the [pilot protocol](evaluation/phase5-pilot-protocol.md) is executable but explicitly UNRUN, with no participant evidence claimed
+Checks: `uv run --project backend python -m unittest backend.tests.test_phase5_uploads backend.tests.test_phase5_connector -v` — pass; live connector — not run
+Fixture/source versions: authored Phase 5 JSONL fixtures; controlled HTTP server fixture; no owned endpoint or credentials
+Known limitations/blockers: no owned maintained application endpoint or credentials are configured, so connector status remains explicitly blocked and no live connected-app result is claimed; the [pilot protocol](evaluation/phase5-pilot-protocol.md) is explicitly UNRUN and no participants have been contacted; upload records are process-local until the persistent workflow phase
+Next gate: obtain authorized owned-app endpoint/configuration and run the read-only connector against it with recorded access metadata
 
 **Checks to establish**
 

@@ -13,15 +13,21 @@
     "/v1/runs/{runId}/findings": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "get": { "operationId": "listFindings", "responses": { "200": { "description": "Findings linked to evidence IDs" } } } },
     "/v1/runs/{runId}/evidence": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "get": { "operationId": "listEvidence", "responses": { "200": { "description": "Evidence and source metadata" } } } },
     "/v1/runs/{runId}/timeline": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "get": { "operationId": "listTimelineEvents", "responses": { "200": { "description": "Actual bounded tool execution events" } } } },
+    "/v1/runs/{runId}/workflow": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "post": { "operationId": "runInvestigationWorkflow", "responses": { "202": { "description": "Checkpointed retrieval and claim-support workflow result" } } } },
     "/v1/runs/{runId}/review": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "post": { "operationId": "reviewFinding", "description": "Accept, correct, challenge, or withhold a source while preserving run context.", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "domain.schema.json#/$defs/Correction" } } } }, "responses": { "202": { "description": "Bounded follow-up review queued" } } } },
+    "/v1/uploads/sample": { "get": { "operationId": "downloadUploadSample", "responses": { "200": { "description": "Authored JSONL upload sample" } } } },
+    "/v1/uploads/initiate": { "post": { "operationId": "initiateUpload", "responses": { "201": { "description": "Guest-isolated upload slot" } } } },
     "/v1/uploads": { "post": { "operationId": "validateUpload", "responses": { "200": { "description": "Bounded JSONL validation result" } } } },
+    "/v1/uploads/{uploadId}": { "parameters": [{ "$ref": "#/components/parameters/UploadId" }], "get": { "operationId": "getUpload", "responses": { "200": { "description": "Guest-isolated upload validation result" } } }, "put": { "operationId": "streamUpload", "responses": { "200": { "description": "Bounded JSONL validation result" } } }, "delete": { "operationId": "cancelUpload", "responses": { "200": { "description": "Upload cancellation result" } } } },
+    "/v1/connectors/status": { "get": { "operationId": "getConnectorStatus", "responses": { "200": { "description": "Read-only connector configuration status" } } } },
     "/v1/reports": { "post": { "operationId": "saveReportRevision", "responses": { "201": { "description": "Immutable report revision" } } } },
     "/v1/reports/{reportId}/export": { "parameters": [{ "$ref": "#/components/parameters/ReportId" }], "post": { "operationId": "exportReport", "responses": { "200": { "description": "Downloadable JSON report containing report metadata, provenance, findings, evidence, and timeline" } } } }
   },
   "components": {
     "parameters": {
       "RunId": { "name": "runId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Stable investigation run identifier" },
-      "ReportId": { "name": "reportId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Stable saved report identifier" }
+      "ReportId": { "name": "reportId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Stable saved report identifier" },
+      "UploadId": { "name": "uploadId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Guest upload identifier" }
     }
   }
 }

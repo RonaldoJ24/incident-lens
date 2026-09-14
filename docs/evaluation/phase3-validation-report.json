@@ -1,60 +1,194 @@
 {
-  "report_version": "incident-lens-phase3-evaluation-v1",
-  "status": "not_measured",
-  "ranking_semantics": "unusual service/window ranking; not a root-cause probability",
-  "split": "validation",
   "case_counts": {
-    "training_rows": 1,
-    "validation_rows": 0,
-    "training_cases": 1,
-    "validation_cases": 0,
-    "independent_training_groups": 1,
-    "independent_validation_groups": 0
-  },
-  "workload": { "validation_rows": 0, "runtime": "not measured" },
-  "versions": {
-    "artifact_version": "incident-lens-ranking-v1",
-    "feature_schema_version": "incident-lens-features-v1",
-    "artifact_sha256": "e06cde2d10b8a6bb4b031a357a844eff0be958a14ccd8b9ddfa60855e5fba75b",
-    "source_version": "RCAEval@bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90"
-  },
-  "metrics": {
-    "event_detection": "not measured",
-    "false_alarm_rate": "not measured",
-    "ranking": { "ndcg_at_5": "not measured", "mrr": "not measured" },
-    "anomaly": {
-      "event_detection": "not measured",
-      "false_alarm_rate": "not measured",
-      "ranking": { "ndcg_at_5": "not measured", "mrr": "not measured" }
-    },
-    "complete_investigation": {
-      "failing_service_identification": "not measured",
-      "useful_next_check": "not measured",
-      "evidence_support": "not measured",
-      "uncertainty_under_missing_or_conflicting_signals": "not measured"
-    }
+    "independent_training_groups": 8,
+    "independent_validation_groups": 4,
+    "training_cases": 8,
+    "training_rows": 505,
+    "validation_cases": 4,
+    "validation_rows": 254
   },
   "comparison": {
-    "model": "rules",
+    "baseline_rank_count": 254,
     "error_rate_latency_rules": "error-rate-latency-rules-v1",
-    "status": "not measured",
-    "rationale": "Only one quality-reviewed development run is available and the independent validation split is empty; retain the transparent rules baseline.",
+    "model": "rules",
+    "model_metrics": {
+      "event_detection": {
+        "f1_at_k": 0.215686,
+        "false_negative": 40,
+        "false_positive": 40,
+        "k": 51,
+        "precision_at_k": 0.215686,
+        "recall_at_k": 0.215686,
+        "true_positive": 11
+      },
+      "false_alarm_rate": 0.197044,
+      "ranking": {
+        "event_window_mrr": 0.2,
+        "event_window_ndcg_at_5": 0.131205
+      },
+      "status": "measured"
+    },
+    "model_rank_count": 254,
+    "rationale": "Private reviewer targets identify event windows only; they do not identify a failing service or root cause.",
+    "rules_metrics": {
+      "event_detection": {
+        "f1_at_k": 0.215686,
+        "false_negative": 40,
+        "false_positive": 40,
+        "k": 51,
+        "precision_at_k": 0.215686,
+        "recall_at_k": 0.215686,
+        "true_positive": 11
+      },
+      "false_alarm_rate": 0.197044,
+      "ranking": {
+        "event_window_mrr": 0.2,
+        "event_window_ndcg_at_5": 0.131205
+      },
+      "status": "measured"
+    },
     "score_summary": {
-      "model_mean": "not measured",
-      "rules_mean": "not measured",
-      "score_disagreement_count": "not measured"
-    }
+      "model_mean": 0.157258724322,
+      "rules_mean": 0.157258724322,
+      "score_disagreement_count": 0
+    },
+    "selected_method_metrics": {
+      "event_detection": {
+        "f1_at_k": 0.215686,
+        "false_negative": 40,
+        "false_positive": 40,
+        "k": 51,
+        "precision_at_k": 0.215686,
+        "recall_at_k": 0.215686,
+        "true_positive": 11
+      },
+      "false_alarm_rate": 0.197044,
+      "ranking": {
+        "event_window_mrr": 0.2,
+        "event_window_ndcg_at_5": 0.131205
+      },
+      "status": "measured"
+    },
+    "selection_metrics": {
+      "candidate_training_groups": 8,
+      "candidate_training_rows": 505,
+      "isolation_forest": {
+        "event_detection": {
+          "f1_at_k": 0.215686,
+          "false_negative": 40,
+          "false_positive": 40,
+          "k": 51,
+          "precision_at_k": 0.215686,
+          "recall_at_k": 0.215686,
+          "true_positive": 11
+        },
+        "false_alarm_rate": 0.197044,
+        "ranking": {
+          "event_window_mrr": 0.142857,
+          "event_window_ndcg_at_5": 0.0
+        },
+        "status": "measured"
+      },
+      "rules": {
+        "event_detection": {
+          "f1_at_k": 0.215686,
+          "false_negative": 40,
+          "false_positive": 40,
+          "k": 51,
+          "precision_at_k": 0.215686,
+          "recall_at_k": 0.215686,
+          "true_positive": 11
+        },
+        "false_alarm_rate": 0.197044,
+        "ranking": {
+          "event_window_mrr": 0.2,
+          "event_window_ndcg_at_5": 0.131205
+        },
+        "status": "measured"
+      },
+      "selected": "rules",
+      "status": "measured",
+      "target_semantics": "reviewed event-window target; not a failing-service or root-cause label"
+    },
+    "status": "measured",
+    "target_semantics": "reviewed event-window target; not a failing-service or root-cause label"
   },
   "error_analysis": {
-    "false_alarms": "not measured: no reviewed event targets",
-    "missing_signals": {},
     "conflicting_signals": 0,
-    "unseen_services": 0,
-    "insufficient_evidence": 0
+    "false_alarms": 40,
+    "insufficient_evidence": 43,
+    "missing_signals": {
+      "logs": 55,
+      "metrics": 39,
+      "traces": 114
+    },
+    "unseen_service_ids": [],
+    "unseen_services": 0
   },
   "limitations": [
-    "Public manifests contain no hidden labels, source filenames, injection times, or per-case ground truth.",
-    "The final held-out manifest remains sealed and was not opened.",
-    "Statistical significance and complete-investigation quality are not measured."
-  ]
+    "Public manifests intentionally contain no hidden labels, source filenames, injection times, or per-case ground truth.",
+    "Reviewer targets identify event windows only; failing-service identification and root-cause quality are not measured.",
+    "Final held-out data is sealed and was not opened by this phase.",
+    "Complete-investigation quality and statistical significance are not measured."
+  ],
+  "metrics": {
+    "anomaly": {
+      "event_detection": {
+        "f1_at_k": 0.215686,
+        "false_negative": 40,
+        "false_positive": 40,
+        "k": 51,
+        "precision_at_k": 0.215686,
+        "recall_at_k": 0.215686,
+        "true_positive": 11
+      },
+      "false_alarm_rate": 0.197044,
+      "ranking": {
+        "event_window_mrr": 0.2,
+        "event_window_ndcg_at_5": 0.131205
+      }
+    },
+    "complete_investigation": {
+      "evidence_support": "not measured",
+      "failing_service_identification": "not measured",
+      "uncertainty_under_missing_or_conflicting_signals": "not measured",
+      "useful_next_check": "not measured"
+    },
+    "event_detection": {
+      "f1_at_k": 0.215686,
+      "false_negative": 40,
+      "false_positive": 40,
+      "k": 51,
+      "precision_at_k": 0.215686,
+      "recall_at_k": 0.215686,
+      "true_positive": 11
+    },
+    "false_alarm_rate": 0.197044,
+    "ranking": {
+      "event_window_mrr": 0.2,
+      "event_window_ndcg_at_5": 0.131205
+    }
+  },
+  "ranking_semantics": "unusual service/window ranking; not a root-cause probability",
+  "report_version": "incident-lens-phase3-evaluation-v1",
+  "split": "validation",
+  "status": "measured_event_window_only",
+  "versions": {
+    "artifact_sha256": "946dbedd2cb4cfd02269c2fd87d25d6f6ce59163df253f8861587d089b6f6e5c",
+    "artifact_version": "incident-lens-ranking-v1",
+    "feature_schema_version": "incident-lens-features-v1",
+    "source": {
+      "dataset": "RCAEval",
+      "dataset_revision": "RCAEval-HF@afeacb11bcc94dadfd1c8f483ee4377b2b8b614e",
+      "source_id": "rcaeval",
+      "source_version": "RCAEval@bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90",
+      "subset": "RE2-OB"
+    },
+    "train_manifest_sha256": "56871dfcc511870067537ebff1024929812d29c3a8a5df0dc87c824a014b1ff9",
+    "validation_manifest_sha256": "c581d70305140e647a0c9c05d251597b0681e9056417aa6e77102322c6ac36e6"
+  },
+  "workload": {
+    "runtime": "not measured",
+    "validation_rows": 254
+  }
 }

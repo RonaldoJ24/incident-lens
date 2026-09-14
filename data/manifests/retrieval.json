@@ -1,0 +1,17 @@
+{
+  "manifest_version": "1.0.0",
+  "manifest_id": "incident-lens-retrieval-evaluation-2026-09-14",
+  "generated_at": "2026-09-14T00:00:00Z",
+  "source": { "source_id": "public-knowledge-ledger", "source_version": "ledger@2026-09-13" },
+  "index": "data/knowledge/verified-runbooks-v1.json",
+  "split": "public_demo",
+  "queries": [
+    { "query": "feature flag telemetry evaluation", "relevant_source_ids": ["otel-feature-flags-docs"] },
+    { "query": "microservice telemetry instrumentation", "relevant_source_ids": ["otel-demo-docs"] },
+    { "query": "compare logs metrics traces same window", "relevant_source_ids": ["incident-lens-evidence-guidance"] }
+  ],
+  "raw_data_in_repo": false,
+  "held_out_solutions_excluded": true,
+  "license": { "name": "Apache-2.0 for OpenTelemetry Demo; local guidance is project-authored", "url": "https://github.com/open-telemetry/opentelemetry-demo/blob/9bfe486ff48ee8a6ea942be74171342cb71a9327/LICENSE" },
+  "attribution": "Reviewed local evaluation queries over the verified public knowledge ledger; no raw telemetry or hidden labels."
+}

@@ -107,20 +107,51 @@ class Phase3RankingTests(unittest.TestCase):
             train = root / "train.json"
             validation = root / "validation.json"
             rows = [_row("sample-%02d" % i, "train-%02d" % i, latency=100 + i * 5) for i in range(8)]
-            val_rows = [_row("val-%02d" % i, "validation-%02d" % i, latency=900 + i * 5) for i in range(2)]
+            val_rows = [_row("sample-val-%02d" % i, "validation-%02d" % i, latency=900 + i * 5) for i in range(2)]
             _manifest(train, "training", rows)
             _manifest(validation, "validation", val_rows)
+            targets = root / "review-targets.json"
+            targets.write_text(json.dumps({
+                "version": "phase3-review-v1",
+                "target_semantics": "reviewed event-window target; not a failing-service or root-cause label",
+                "positive_sample_ids": ["sample-val-00"],
+            }), encoding="utf-8")
             artifact_path = root / "model-manifest.json"
-            artifact = fit_from_manifest(train, validation, artifact_path)
+            artifact = fit_from_manifest(train, validation, artifact_path, targets)
             self.assertEqual(artifact["training_rows"], 8)
             self.assertEqual(artifact["validation_rows"], 2)
-            self.assertEqual(artifact["method"], "isolation_forest")
+            self.assertIn(artifact["method"], {"rules", "isolation_forest"})
+            self.assertEqual(artifact["selection_metrics"]["status"], "measured")
+            self.assertEqual(artifact["selection_metrics"]["candidate_training_rows"], 8)
             verify_artifact(artifact_path)
+            self.assertEqual(artifact["method"], "rules")
+            report = validate_manifest(
+                validation,
+                artifact_path,
+                train_manifest_path=train,
+                review_targets_path=targets,
+            )
+            self.assertEqual(report["comparison"]["selection_metrics"], artifact["selection_metrics"])
+            self.assertIn("isolation_forest", report["comparison"]["selection_metrics"])
+            self.assertEqual(report["comparison"]["selected_method_metrics"], report["comparison"]["rules_metrics"])
             service = RankingService(artifact_path)
             response = service.rank(val_rows)
             self.assertEqual(len(response["ranking"]), 2)
             self.assertEqual(response["ranking_semantics"], RANKING_SEMANTICS)
             self.assertNotIn("root_cause_probability", json.dumps(response))
+
+    def test_no_review_targets_keep_rules(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            train = root / "train.json"
+            validation = root / "validation.json"
+            rows = [_row("sample-%02d" % i, "train-%02d" % i) for i in range(8)]
+            val_rows = [_row("val-%02d" % i, "validation-%02d" % i) for i in range(2)]
+            _manifest(train, "training", rows)
+            _manifest(validation, "validation", val_rows)
+            artifact = fit_from_manifest(train, validation, root / "model-manifest.json", root / "missing-targets.json")
+            self.assertEqual(artifact["method"], "rules")
+            self.assertEqual(artifact["selection_metrics"]["status"], "not measured")
 
     def test_tampered_artifact_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:

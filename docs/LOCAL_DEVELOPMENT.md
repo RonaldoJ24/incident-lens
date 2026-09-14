@@ -31,6 +31,19 @@ checkout example, and the selector includes degraded performance and
 insufficient evidence. Run, cancel, retry, review, save, and export actions
 are bounded and read-only; the timeline records the actual fixture checks.
 
+The guest upload boundary accepts only strict JSONL records with `log`,
+`metric`, and `trace` signals. Download the authored sample from
+`GET /v1/uploads/sample`, initiate a slot with
+`POST /v1/uploads/initiate`, then stream the body to
+`PUT /v1/uploads/{upload_id}` with `X-Session-ID` and
+`Content-Type: application/jsonl`. The one-step `POST /v1/uploads` remains a
+compatibility path. Validation reports record, duplicate, conflict,
+missing-signal, and untrusted-content counts; `GET`/`DELETE
+/v1/uploads/{upload_id}` remain isolated to the owning session, and DELETE can
+cancel an active streaming validation.
+The read-only connector status is available at `GET /v1/connectors/status` and
+stays `blocked` until an owned endpoint is configured and actually verified.
+
 Focused validation:
 
 ```sh
