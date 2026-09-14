@@ -33,8 +33,8 @@ attribution, redistribution, and derived-artifact terms before data is reused.
 | 3 | Real grouped train/validation rows, rules/Isolation Forest comparison, artifact verification, and sealed final-test policy | Correct feature semantics and per-run operational metrics before model selection | Audit found unsupported latency naming and globally aggregated/non-operational metrics; current report is provisional and final held-out remains sealed |
 | 4 | Local TF-IDF/LSA retrieval, citations, typed compiled LangGraph, durable checkpoints, review, recovery, and hostile-input tests | Select and evaluate a real model/provider and substantive retrieval corpus | Current retrieval corpus/evaluation is too small and the fixed claim path is not a grounded generative provider |
 | 5 | Bounded guest upload flow plus fixed-path, metadata-only live verification of the owned `cadencia-ai` GitHub Actions feed | Keep live connector scope explicit; pilot outreach requires authorization | Connector evidence is CI metadata, not application incident telemetry; pilot protocol is unrun |
-| 6 | Reproducible release checks, container/CI contract, runbooks, threat/model cards, controlled workload, four-width browser-local visual review, and green release matrix run `34819200429` | Preserve the public preview boundary and verify any future full backend hosting; the static Pages preview is available at [ronaldoj24.github.io/incident-lens](https://ronaldoj24.github.io/incident-lens/) | Final held-out stays sealed; provider cost/hosted latency and full browser/API integration are not measured |
-| 7 | Static authored-fixture preview and Pages workflow implemented; Pages run `34819200490` verified at [ronaldoj24.github.io/incident-lens](https://ronaldoj24.github.io/incident-lens/) | Keep the README and preview explicit about browser-local authored-fixture behavior | Static preview is not the FastAPI/PostgreSQL/provider-backed application |
+| 6 | Reproducible release checks, container/CI contract, runbooks, threat/model cards, controlled workload, four-width browser-local visual review, and green release matrix run `34821311229` | Preserve the public preview boundary and verify any future full backend hosting; the static Pages preview is available at [ronaldoj24.github.io/incident-lens](https://ronaldoj24.github.io/incident-lens/) | Final held-out stays sealed; provider cost/hosted latency and full browser/API integration are not measured |
+| 7 | Static authored-fixture preview and Pages workflow implemented; final UI deploy run `34821311324` verified at [ronaldoj24.github.io/incident-lens](https://ronaldoj24.github.io/incident-lens/) | Keep the README and preview explicit about browser-local authored-fixture behavior | Static preview is not the FastAPI/PostgreSQL/provider-backed application |
 
 ## Delivery rules
 
@@ -376,9 +376,9 @@ Next gate: retain the connector's narrow scope in the public presentation and ru
 deployment contract, container hardening, readiness/metrics hooks, rollback
 runbook, threat/access review, model/data card, controlled workload
 measurement, and browser-local visual review are implemented. Release matrix
-run `34819200429` is green across backend/PostgreSQL, frontend, and container;
+run `34821311229` is green across backend/PostgreSQL, frontend, and container;
 the static authored-fixture Pages preview is verified separately by run
-`34819200490` at <https://ronaldoj24.github.io/incident-lens/>. Full API/
+`34821311324` at <https://ronaldoj24.github.io/incident-lens/>. Full API/
 PostgreSQL browser integration, a backend deployment, and final held-out
 evaluation remain unverified/sealed.
 
@@ -438,7 +438,7 @@ Evidence record 2026-09-14
 Status: in progress
 Changed paths: `Makefile`, `.github/workflows/phase6-release.yml`, `backend/Dockerfile`, `backend/incident_lens/observability.py`, `backend/incident_lens/validation/performance.py`, `backend/incident_lens/api/app.py`, `backend/incident_lens/api/store.py`, `backend/tests/test_phase6_release.py`, `contracts/v1/api.openapi.json`, `compose.yml`, `deploy/compose.release.yml`, `deploy/README.md`, `.env.example`, `README.md`, `docs/CONFIGURATION.md`, `docs/LOCAL_DEVELOPMENT.md`, `docs/OPERATIONS.md`, `docs/THREAT_MODEL.md`, `docs/MODEL_DATA_CARD.md`, `docs/evaluation/phase6-performance.md`, `docs/evaluation/phase6-visual-review.md`
 Acceptance evidence: local release command surface, provider-neutral release compose contract, non-root/healthchecked API image, readiness and bounded metrics endpoints, migration/rollback runbook, threat/access review, model/data card, and controlled workload measurement report
-Checks: release matrix run `34819200429` — pass (backend/PostgreSQL, frontend, and container jobs); Pages run `34819200490` — pass (static authored-fixture preview at <https://ronaldoj24.github.io/incident-lens/>); `make release-check PERF_SAMPLES=20` — pass; full backend discovery ran 67 tests with 3 PostgreSQL skips because no `INCIDENT_LENS_DATABASE_URL` is configured; contracts, leakage, injection, reproducibility, artifact verification/validation, readiness/metrics/container boundary tests, and local controlled workload measurement passed; frontend lint/typecheck/test/build passed; `uv lock --project backend --check` — pass; `uv run --project backend python -m compileall -q backend/incident_lens` — pass; local link/privacy validator — pass; `git diff --check` — pass; compose files parsed with Ruby YAML because Docker is unavailable
+Checks: release matrix run `34821311229` — pass (backend/PostgreSQL, frontend, and container jobs); final UI deploy run `34821311324` — pass (static authored-fixture preview at <https://ronaldoj24.github.io/incident-lens/>); `make release-check PERF_SAMPLES=20` — pass; full backend discovery ran 70 tests with 3 PostgreSQL skips because no `INCIDENT_LENS_DATABASE_URL` is configured; contracts, leakage, injection, reproducibility, artifact verification/validation, readiness/metrics/container boundary tests, and local controlled workload measurement passed; frontend lint/typecheck/test/build passed; `uv lock --project backend --check` — pass; `uv run --project backend python -m compileall -q backend/incident_lens` — pass; local link/privacy validator — pass; `git diff --check` — pass; compose files parsed with Ruby YAML because Docker is unavailable
 Fixture/source versions: authored `fixture-v1`, Phase 5 upload sample `phase5-upload-v1`, Phase 3 artifact `incident-lens-ranking-v1`, workload `phase6-local-controlled-v1`
 Known limitations/blockers: the verified public URL is only a browser-local authored static preview; no backend deployment/provider is configured; provider cost and hosted latency are not measured; the browser evidence covers only the static preview, not full FastAPI/PostgreSQL integration; screenshots are not checked in; final held-out data remains sealed
 Next gate: if a full public application is pursued, verify its API/PostgreSQL browser path and preserve the connector's narrow metadata-only scope; do not treat the Pages preview or green release matrix as Phase 6 completion
@@ -479,12 +479,26 @@ claimed here.
 
 Evidence record 2026-09-14
 Status: in progress
-Changed paths: `README.md`, `docs/IMPLEMENTATION_PLAN.md`
+Changed paths: `README.md`, `docs/IMPLEMENTATION_PLAN.md`, `frontend/src/App.tsx`, `frontend/src/demoAdapter.ts`, `frontend/src/UploadPanel.tsx`, `frontend/src/styles.css`, `frontend/scripts/test.mjs`, `.github/workflows/public-demo-pages.yml`
 Acceptance evidence: README links the verified static Pages preview at
 <https://ronaldoj24.github.io/incident-lens/>, identifies it as a browser-local
 authored-fixture demo, documents the exact local setup/API/evaluation/deployment
-surfaces, and publishes Phase 3/4/5 limitations; Pages workflow run
-`34819200490` passed; release matrix run `34819200429` passed its
+surfaces, and publishes Phase 3/4/5 limitations. The deployed UI exposes
+accessible Evaluation and Engineering sections, a compact investigation
+hierarchy (context, primary finding, evidence drawer, timeline, review actions),
+and a collapsed optional upload. Primary status/finding copy is plain-language;
+technical details and the backend/provider/connector boundary remain explicit
+in disclosures. Canonical fixture values are concrete and reproducible:
+`checkout-failure` on `checkoutservice` from `2026-09-13T08:00:00Z` to
+`2026-09-13T08:10:00Z` includes error rate `0.24`, latency `820 ms`, and a
+`910 ms` trace; `degraded-performance` runs from `2026-09-13T09:00:00Z` to
+`2026-09-13T09:10:00Z` with `640 ms`
+latency, `0.04` error rate, and a `640 ms` trace; `insufficient-evidence` runs
+from `2026-09-13T10:00:00Z` to `2026-09-13T10:10:00Z` with metric and trace
+records missing. Browser
+acceptance at `1280x800` and `390x844` found no horizontal overflow; screenshots
+were captured and inspected but are not checked in. Final UI deploy run
+`34821311324` passed; release matrix run `34821311229` passed its
 backend/PostgreSQL, frontend, and container jobs; PostgreSQL integration run
 `34819200466` passed.
 Checks: `PYTHONPATH=backend python3 -m incident_lens.validation.local README.md docs` — pass; `git diff --check` — pass; manual link/path/privacy-sensitive wording review — pass

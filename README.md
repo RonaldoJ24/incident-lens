@@ -18,8 +18,8 @@ Verified delivery evidence:
 
 | Surface | Evidence |
 | --- | --- |
-| Public preview | [Pages run `34819200490`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34819200490) passed; [live URL](https://ronaldoj24.github.io/incident-lens/) resolves to the browser-local preview |
-| Release matrix | [Run `34819200429`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34819200429) passed the backend/PostgreSQL, frontend, and container jobs |
+| Public preview | [Final UI deploy run `34821311324`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34821311324) passed; [live URL](https://ronaldoj24.github.io/incident-lens/) resolves to the browser-local preview |
+| Release matrix | [Final run `34821311229`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34821311229) passed the backend/PostgreSQL, frontend, and container jobs |
 | PostgreSQL persistence | [Phase 1 run `34819200466`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34819200466) passed the PostgreSQL integration path |
 | Owned connector | The bounded metadata-only verification is recorded in [`docs/evaluation/phase5-live-connector.md`](docs/evaluation/phase5-live-connector.md) |
 
@@ -35,6 +35,8 @@ performance, and insufficient evidence. A guest can:
 - validate a bounded JSONL upload with missing, duplicate, conflicting, and
   prompt-like content reported as data; and
 - save and export a report. Reports retain provenance and never assert repair.
+- inspect the accessible **Evaluation** and **Engineering** sections; optional
+  upload and technical details stay collapsed until requested.
 
 The browser demo stores its state locally so a reload can replay the current
 authored preview session. It is not a hosted incident service.
@@ -155,7 +157,7 @@ checks, reproducibility, provisional artifact verification, controlled local
 workload measurement, frontend checks, container boundaries, and the static
 preview build. PostgreSQL integration is included when
 `INCIDENT_LENS_DATABASE_URL` is configured. The corresponding green CI matrix
-is [run `34819200429`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34819200429).
+is [final run `34821311229`](https://github.com/RonaldoJ24/incident-lens/actions/runs/34821311229).
 
 The evidence trail is split by data boundary:
 
