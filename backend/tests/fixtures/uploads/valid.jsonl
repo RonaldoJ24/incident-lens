@@ -1,0 +1,3 @@
+{"event_id":"valid-log-1","timestamp":"2026-09-14T08:00:00Z","signal":"log","service":"checkoutservice","message":"request completed"}
+{"event_id":"valid-metric-1","timestamp":"2026-09-14T08:00:01Z","signal":"metric","service":"checkoutservice","value":42.0}
+{"event_id":"valid-trace-1","timestamp":"2026-09-14T08:00:02Z","signal":"trace","service":"checkoutservice","duration_ms":12.5}

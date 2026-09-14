@@ -1,0 +1,2 @@
+{"event_id":"malformed-1","timestamp":"not-a-timestamp","signal":"log","service":"checkoutservice","message":"bad timestamp"}
+not-json

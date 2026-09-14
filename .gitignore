@@ -49,6 +49,10 @@ data/derived/
 data/weights/
 rawdata/
 uploads/
+# Phase 5's small, reviewed JSONL fixtures are test inputs, not user uploads.
+!backend/tests/fixtures/
+!backend/tests/fixtures/uploads/
+!backend/tests/fixtures/uploads/*.jsonl
 weights/
 .cache/
 *.parquet

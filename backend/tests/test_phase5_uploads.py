@@ -23,6 +23,18 @@ def fixture(name: str) -> bytes:
 
 
 class UploadValidationTests(unittest.TestCase):
+    def test_all_phase5_fixtures_are_present(self):
+        expected = {
+            "valid.jsonl",
+            "malformed.jsonl",
+            "incomplete.jsonl",
+            "oversized.jsonl",
+            "duplicate.jsonl",
+            "conflicting.jsonl",
+            "prompt-injection.jsonl",
+        }
+        self.assertEqual({path.name for path in ROOT.glob("*.jsonl")}, expected)
+
     def test_required_fixture_outcomes(self):
         self.assertEqual(asyncio.run(inspect_bytes(fixture("valid.jsonl"))).validation, "accepted")
         self.assertEqual(asyncio.run(inspect_bytes(fixture("malformed.jsonl"))).validation, "invalid")
