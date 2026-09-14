@@ -1,0 +1,65 @@
+{
+  "manifest_version": "1.0.0",
+  "manifest_id": "incident-lens-phase3-training-v1",
+  "generated_at": "2026-09-14T00:00:00Z",
+  "source": {
+    "source_id": "rcaeval",
+    "dataset": "RCAEval",
+    "subset": "RE2-OB",
+    "source_version": "RCAEval@bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90",
+    "dataset_revision": "RCAEval-HF@afeacb11bcc94dadfd1c8f483ee4377b2b8b614e"
+  },
+  "split": "training",
+  "grouping": "independent-run",
+  "selection_status": "one quality-reviewed development case; no causal targets exposed",
+  "case_count": 1,
+  "row_count": 1,
+  "run_group_count": 1,
+  "cases": [
+    {
+      "case_id": "dev-re2ob-001",
+      "run_group": "run-group-001",
+      "signal_completeness": { "logs": "available", "metrics": "available", "traces": "available" },
+      "quality_status": "reviewed"
+    }
+  ],
+  "rows": [
+    {
+      "sample_id": "sample-0001",
+      "case_id": "dev-re2ob-001",
+      "run_group": "run-group-001",
+      "service_id": "service-unknown-001",
+      "window_id": "window-0001",
+      "features": {
+        "error_rate": null,
+        "latency_ms": null,
+        "latency_p95_ms": null,
+        "error_count": null,
+        "request_count": null,
+        "event_count": 451446,
+        "log_count": 58008,
+        "metric_count": 1441,
+        "trace_count": 391997,
+        "missing_logs": 0,
+        "missing_metrics": 0,
+        "missing_traces": 0,
+        "conflict_count": 0
+      }
+    }
+  ],
+  "license": {
+    "name": "MIT",
+    "url": "https://github.com/phamquiluan/RCAEval/blob/bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90/LICENSE",
+    "redistribution": "raw telemetry remains outside Git"
+  },
+  "attribution": "Pham, Luan et al. RCAEval (2025). Public Phase 3 manifest contains only reviewed aggregate features.",
+  "raw_data_in_repo": false,
+  "leakage_review": {
+    "neutral_ids": true,
+    "hidden_labels_removed": true,
+    "source_filenames_removed": true,
+    "injection_metadata_excluded": true,
+    "review_status": "passed"
+  },
+  "manifest_sha256": "802c7c26fa3ae58760bdebf1f67e9ab1112b3d39613b1a9e8e9dff84ac511901"
+}

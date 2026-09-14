@@ -1,10 +1,11 @@
-"""SQLite state store for the local Phase 1 slice.
+"""SQLite and PostgreSQL state stores for the Phase 1 slice.
 
-The schema is intentionally relational and portable. A future PostgreSQL
-migration can retain the same tables and JSON provenance payloads.
+Both backends expose the same relational operations and JSON provenance
+payloads; PostgreSQL stores those payloads as JSONB.
 """
 
 import json
+import os
 import sqlite3
 import threading
 import uuid
@@ -25,6 +26,12 @@ def iso(value: datetime) -> str:
 
 def json_text(value: Any) -> str:
     return json.dumps(value, separators=(",", ":"), sort_keys=True)
+
+
+def parse_json(value: Any) -> Any:
+    """Read JSON stored as text (SQLite) or native JSONB (PostgreSQL)."""
+
+    return json.loads(value) if isinstance(value, str) else value
 
 
 class StateStore:
@@ -268,6 +275,9 @@ class StateStore:
 
     def save_report(self, session_id: str, run_id: str, provenance: Dict[str, Any], finding_ids: List[str], idempotency_key: Optional[str]) -> Dict[str, Any]:
         with self.lock:
+            owner = self.connection.execute("SELECT session_id FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+            if not owner or owner["session_id"] != session_id:
+                raise ValueError("Report session does not own run")
             if idempotency_key:
                 existing = self.connection.execute(
                     "SELECT * FROM reports WHERE session_id = ? AND idempotency_key = ?",
@@ -291,3 +301,237 @@ class StateStore:
         with self.lock:
             row = self.connection.execute("SELECT * FROM reports WHERE report_id = ?", (report_id,)).fetchone()
         return dict(row) if row else None
+
+
+class PostgresStateStore:
+    """PostgreSQL state store with the same API as :class:`StateStore`.
+
+    psycopg is imported only when this backend is selected, keeping SQLite-only
+    unit tests independent of a PostgreSQL client or service.
+    """
+
+    def __init__(self, database_url: str, migration_dir: Optional[str] = None) -> None:
+        try:
+            import psycopg
+            from psycopg.rows import dict_row
+            from psycopg.types.json import Jsonb
+        except ImportError as exc:  # pragma: no cover - exercised in setup failures
+            raise RuntimeError("PostgreSQL requires the psycopg package; install the backend dependencies") from exc
+        self._psycopg = psycopg
+        self._Jsonb = Jsonb
+        self.migration_dir = migration_dir
+        self.connection = psycopg.connect(database_url, row_factory=dict_row)
+        self.lock = threading.RLock()
+        from incident_lens.migrations import apply_migrations
+
+        apply_migrations(self.connection, migration_dir=migration_dir)
+
+    def close(self) -> None:
+        with self.lock:
+            self.connection.close()
+
+    def create_schema(self) -> None:
+        """Keep the SQLite-compatible store lifecycle for callers that expect it."""
+
+        from incident_lens.migrations import apply_migrations
+
+        with self.lock:
+            apply_migrations(self.connection, migration_dir=self.migration_dir)
+
+    @staticmethod
+    def _row_value(row: Any, key: str) -> Any:
+        return row[key]
+
+    def seed_cases(self, cases: Iterable[FixtureCase]) -> None:
+        with self.lock, self.connection.transaction():
+            for case in cases:
+                self.connection.execute(
+                    """INSERT INTO cases
+                    (case_id,title,description,service,fixture_key,telemetry_origin,source_interval_json,fixture_kind,public_example)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    ON CONFLICT (case_id) DO NOTHING""",
+                    (
+                        case.case_id,
+                        case.title,
+                        case.description,
+                        case.service,
+                        case.case_id,
+                        "controlled_runtime",
+                        self._Jsonb(case.source_interval_payload),
+                        case.fixture_kind,
+                        True,
+                    ),
+                )
+
+    def create_session(self) -> Dict[str, Any]:
+        now = utc_now()
+        session = {
+            "session_id": "sess-" + uuid.uuid4().hex[:12],
+            "created_at": iso(now),
+            "expires_at": iso(now + timedelta(hours=1)),
+            "isolation_scope": "guest",
+        }
+        with self.lock, self.connection.transaction():
+            self.connection.execute(
+                "INSERT INTO sessions(session_id,created_at,expires_at,isolation_scope) VALUES (%s,%s,%s,%s)",
+                tuple(session.values()),
+            )
+        return session
+
+    def session_exists(self, session_id: str) -> bool:
+        with self.lock, self.connection.transaction():
+            row = self.connection.execute("SELECT 1 FROM sessions WHERE session_id = %s", (session_id,)).fetchone()
+        return row is not None
+
+    def list_cases(self) -> List[Dict[str, Any]]:
+        with self.lock, self.connection.transaction():
+            return list(self.connection.execute("SELECT * FROM cases ORDER BY case_id").fetchall())
+
+    def get_case(self, case_id: str) -> Optional[Dict[str, Any]]:
+        with self.lock, self.connection.transaction():
+            return self.connection.execute("SELECT * FROM cases WHERE case_id = %s", (case_id,)).fetchone()
+
+    def create_run(self, session_id: str, case_id: str, provenance: Dict[str, Any], idempotency_key: Optional[str]) -> Dict[str, Any]:
+        now = utc_now()
+        run_id = "run-" + uuid.uuid4().hex[:12]
+        with self.lock, self.connection.transaction():
+            row = None
+            if idempotency_key:
+                row = self.connection.execute(
+                    "SELECT * FROM runs WHERE session_id = %s AND idempotency_key = %s",
+                    (session_id, idempotency_key),
+                ).fetchone()
+            if row:
+                return dict(row)
+            row = self.connection.execute(
+                """INSERT INTO runs(run_id,session_id,case_id,status,attempt,provenance_json,created_at,updated_at,idempotency_key)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (session_id, idempotency_key) DO NOTHING
+                RETURNING *""",
+                (run_id, session_id, case_id, "queued", 1, self._Jsonb(provenance), now, now, idempotency_key),
+            ).fetchone()
+            if row:
+                return dict(row)
+            # Another request won the idempotency race. The transaction is
+            # still healthy because the conflict was handled by PostgreSQL.
+            return dict(
+                self.connection.execute(
+                    "SELECT * FROM runs WHERE session_id = %s AND idempotency_key = %s",
+                    (session_id, idempotency_key),
+                ).fetchone()
+            )
+
+    def get_run(self, run_id: str) -> Optional[Dict[str, Any]]:
+        with self.lock, self.connection.transaction():
+            return self.connection.execute("SELECT * FROM runs WHERE run_id = %s", (run_id,)).fetchone()
+
+    def update_run(self, run_id: str, status: str, provenance: Optional[Dict[str, Any]] = None, increment_attempt: bool = False) -> Optional[Dict[str, Any]]:
+        now = utc_now()
+        with self.lock, self.connection.transaction():
+            row = self.connection.execute("SELECT attempt, provenance_json FROM runs WHERE run_id = %s FOR UPDATE", (run_id,)).fetchone()
+            if not row:
+                return None
+            attempt = row["attempt"] + (1 if increment_attempt else 0)
+            updated = self.connection.execute(
+                """UPDATE runs SET status = %s, attempt = %s, provenance_json = %s, updated_at = %s
+                WHERE run_id = %s RETURNING *""",
+                (status, attempt, self._Jsonb(provenance if provenance is not None else row["provenance_json"]), now, run_id),
+            ).fetchone()
+        return dict(updated) if updated else None
+
+    def _next_sequence(self, table: str, run_id: str) -> int:
+        if table not in {"timeline_events", "evidence", "corrections"}:
+            raise ValueError("unsupported sequence table")
+        self.connection.execute("SELECT run_id FROM runs WHERE run_id = %s FOR UPDATE", (run_id,)).fetchone()
+        row = self.connection.execute("SELECT COALESCE(MAX(sequence), -1) + 1 AS next_sequence FROM %s WHERE run_id = %%s" % table, (run_id,)).fetchone()
+        return int(row["next_sequence"])
+
+    def insert_timeline(self, run_id: str, payload: Dict[str, Any]) -> None:
+        with self.lock, self.connection.transaction():
+            self.connection.execute(
+                "INSERT INTO timeline_events(event_id,run_id,payload_json,sequence) VALUES (%s,%s,%s,%s)",
+                (payload["event_id"], run_id, self._Jsonb(payload), self._next_sequence("timeline_events", run_id)),
+            )
+
+    def insert_evidence(self, run_id: str, payload: Dict[str, Any]) -> None:
+        with self.lock, self.connection.transaction():
+            self.connection.execute(
+                "INSERT INTO evidence(evidence_id,run_id,payload_json,sequence) VALUES (%s,%s,%s,%s)",
+                (payload["evidence_id"], run_id, self._Jsonb(payload), self._next_sequence("evidence", run_id)),
+            )
+
+    def insert_finding(self, run_id: str, payload: Dict[str, Any]) -> None:
+        with self.lock, self.connection.transaction():
+            self.connection.execute(
+                "INSERT INTO findings(finding_id,run_id,payload_json) VALUES (%s,%s,%s)",
+                (payload["finding_id"], run_id, self._Jsonb(payload)),
+            )
+
+    def insert_correction(self, run_id: str, payload: Dict[str, Any]) -> None:
+        with self.lock, self.connection.transaction():
+            self.connection.execute(
+                "INSERT INTO corrections(correction_id,run_id,payload_json,sequence) VALUES (%s,%s,%s,%s)",
+                (payload["correction_id"], run_id, self._Jsonb(payload), self._next_sequence("corrections", run_id)),
+            )
+
+    def _payloads(self, table: str, run_id: str) -> List[Dict[str, Any]]:
+        if table not in {"evidence", "timeline_events", "corrections"}:
+            raise ValueError("unsupported payload table")
+        with self.lock, self.connection.transaction():
+            rows = self.connection.execute("SELECT payload_json FROM %s WHERE run_id = %%s ORDER BY sequence" % table, (run_id,)).fetchall()
+        return [parse_json(row["payload_json"]) for row in rows]
+
+    def list_evidence(self, run_id: str) -> List[Dict[str, Any]]:
+        return self._payloads("evidence", run_id)
+
+    def list_findings(self, run_id: str) -> List[Dict[str, Any]]:
+        with self.lock, self.connection.transaction():
+            rows = self.connection.execute("SELECT payload_json FROM findings WHERE run_id = %s ORDER BY finding_id", (run_id,)).fetchall()
+        return [parse_json(row["payload_json"]) for row in rows]
+
+    def list_timeline(self, run_id: str) -> List[Dict[str, Any]]:
+        return self._payloads("timeline_events", run_id)
+
+    def list_corrections(self, run_id: str) -> List[Dict[str, Any]]:
+        return self._payloads("corrections", run_id)
+
+    def save_report(self, session_id: str, run_id: str, provenance: Dict[str, Any], finding_ids: List[str], idempotency_key: Optional[str]) -> Dict[str, Any]:
+        report_id = "report-" + uuid.uuid4().hex[:12]
+        with self.lock, self.connection.transaction():
+            owner = self.connection.execute("SELECT session_id FROM runs WHERE run_id = %s FOR UPDATE", (run_id,)).fetchone()
+            if not owner or owner["session_id"] != session_id:
+                raise ValueError("Report session does not own run")
+            if idempotency_key:
+                existing = self.connection.execute(
+                    "SELECT * FROM reports WHERE session_id = %s AND idempotency_key = %s",
+                    (session_id, idempotency_key),
+                ).fetchone()
+                if existing:
+                    return dict(existing)
+            # The ownership query above also serializes revision allocation.
+            revision_row = self.connection.execute("SELECT COALESCE(MAX(revision), 0) + 1 AS revision FROM reports WHERE run_id = %s", (run_id,)).fetchone()
+            inserted = self.connection.execute(
+                """INSERT INTO reports(report_id,session_id,run_id,revision,provenance_json,finding_ids_json,saved_at,repair_claim,idempotency_key)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (session_id, idempotency_key) DO NOTHING
+                RETURNING *""",
+                (report_id, session_id, run_id, int(revision_row["revision"]), self._Jsonb(provenance), self._Jsonb(finding_ids), utc_now(), False, idempotency_key),
+            ).fetchone()
+            if inserted:
+                return dict(inserted)
+            return dict(self.connection.execute("SELECT * FROM reports WHERE session_id = %s AND idempotency_key = %s", (session_id, idempotency_key)).fetchone())
+
+    def get_report(self, report_id: str) -> Optional[Dict[str, Any]]:
+        with self.lock, self.connection.transaction():
+            return self.connection.execute("SELECT * FROM reports WHERE report_id = %s", (report_id,)).fetchone()
+
+
+def select_store(db_path: Optional[str] = None, database_url: Optional[str] = None) -> Any:
+    """Select PostgreSQL when configured; otherwise retain the local SQLite path."""
+
+    if db_path is not None:
+        return StateStore(db_path)
+    configured_url = database_url or os.getenv("INCIDENT_LENS_DATABASE_URL")
+    if configured_url:
+        return PostgresStateStore(configured_url)
+    return StateStore(os.getenv("INCIDENT_LENS_SQLITE_PATH", "/tmp/incident-lens-phase1.sqlite3"))

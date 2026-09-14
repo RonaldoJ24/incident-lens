@@ -36,6 +36,8 @@ tmp/
 output/
 artifacts/generated/
 artifacts/weights/
+artifacts/*.joblib
+artifacts/model-manifest.json
 reports/generated/
 screenshots/
 

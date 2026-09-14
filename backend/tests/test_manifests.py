@@ -16,7 +16,7 @@ ROOT = Path(__file__).parents[2]
 class ManifestValidationTests(unittest.TestCase):
     def test_audited_manifests_validate_without_raw_data(self):
         paths = validate_directory(ROOT / "data/manifests")
-        self.assertEqual(len(paths), 3)
+        self.assertEqual(len(paths), 5)
         for path in paths:
             self.assertFalse(json.loads(path.read_text())["raw_data_in_repo"])
 

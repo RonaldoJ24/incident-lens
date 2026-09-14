@@ -2,7 +2,6 @@
 
 import atexit
 import json
-import os
 import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -29,7 +28,7 @@ from incident_lens.api.models import (
     TimelineList,
     UploadValidation,
 )
-from incident_lens.api.store import StateStore, iso, utc_now
+from incident_lens.api.store import iso, parse_json, select_store, utc_now
 from incident_lens.worker.runner import BoundedInvestigationRunner
 
 
@@ -44,7 +43,7 @@ def _case_payload(row: Any) -> Dict[str, Any]:
         "description": row["description"],
         "service": row["service"],
         "telemetry_origin": row["telemetry_origin"],
-        "source_interval": json.loads(row["source_interval_json"]),
+        "source_interval": parse_json(row["source_interval_json"]),
         "fixture_kind": row["fixture_kind"],
         "public_example": bool(row["public_example"]),
     }
@@ -57,7 +56,7 @@ def _run_payload(row: Dict[str, Any]) -> Run:
         case_id=row["case_id"],
         status=row["status"],
         attempt=row["attempt"],
-        provenance=json.loads(row["provenance_json"]),
+        provenance=parse_json(row["provenance_json"]),
     )
 
 
@@ -67,18 +66,17 @@ def _report_payload(row: Dict[str, Any]) -> Report:
         session_id=row["session_id"],
         run_id=row["run_id"],
         revision=row["revision"],
-        provenance=json.loads(row["provenance_json"]),
-        finding_ids=json.loads(row["finding_ids_json"]),
+        provenance=parse_json(row["provenance_json"]),
+        finding_ids=parse_json(row["finding_ids_json"]),
         saved_at=row["saved_at"],
         repair_claim=bool(row["repair_claim"]),
     )
 
 
-def create_app(db_path: Optional[str] = None) -> FastAPI:
-    """Create an isolated app instance; tests pass a temporary SQLite path."""
+def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None) -> FastAPI:
+    """Create an isolated app, selecting PostgreSQL when a URL is configured."""
 
-    configured_path = db_path or os.getenv("INCIDENT_LENS_SQLITE_PATH", "/tmp/incident-lens-phase1.sqlite3")
-    store = StateStore(configured_path)
+    store = select_store(db_path=db_path, database_url=database_url)
     from incident_lens.fixtures.loader import load_cases
 
     store.seed_cases(load_cases())
@@ -127,7 +125,7 @@ def create_app(db_path: Optional[str] = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="Case not found")
         if request.service != case["service"]:
             raise HTTPException(status_code=400, detail="Service is not available for this case")
-        source_interval = json.loads(case["source_interval_json"])
+        source_interval = parse_json(case["source_interval_json"])
         if request.window_start:
             source_interval["start"] = iso(request.window_start)
         if request.window_end:
@@ -239,7 +237,7 @@ def create_app(db_path: Optional[str] = None) -> FastAPI:
         report = store.save_report(
             request.session_id,
             request.run_id,
-            json.loads(run["provenance_json"]),
+            parse_json(run["provenance_json"]),
             [item["finding_id"] for item in store.list_findings(request.run_id)],
             idempotency_key,
         )
@@ -260,7 +258,7 @@ def create_app(db_path: Optional[str] = None) -> FastAPI:
         return JSONResponse(
             content={
                 "report": _report_payload(report).model_dump(mode="json"),
-                "provenance": json.loads(report["provenance_json"]),
+                "provenance": parse_json(report["provenance_json"]),
                 "findings": store.list_findings(report["run_id"]),
                 "evidence": store.list_evidence(report["run_id"]),
                 "timeline": store.list_timeline(report["run_id"]),

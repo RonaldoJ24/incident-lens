@@ -97,6 +97,7 @@ def validate_manifest(path: Path) -> Dict[str, Any]:
         if data.get("selected_case_count") != len(cases):
             raise ManifestError("selected_case_count does not match cases")
     leakage = list(_walk_for_leakage(data.get("cases", []), "cases"))
+    leakage.extend(_walk_for_leakage(data.get("rows", []), "rows"))
     if leakage:
         raise ManifestError("possible hidden-label or filename leakage at %s" % ", ".join(leakage))
     return data

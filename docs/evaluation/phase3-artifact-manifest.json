@@ -1,0 +1,38 @@
+{
+  "artifact_sha256": "e06cde2d10b8a6bb4b031a357a844eff0be958a14ccd8b9ddfa60855e5fba75b",
+  "artifact_version": "incident-lens-ranking-v1",
+  "baseline": {
+    "error_rate_threshold": 0.05,
+    "latency_threshold_ms": 500.0,
+    "method": "error-rate-latency-rules-v1"
+  },
+  "feature_names": [
+    "error_rate",
+    "latency_ms",
+    "latency_p95_ms",
+    "error_count",
+    "request_count",
+    "event_count",
+    "log_count",
+    "metric_count",
+    "trace_count",
+    "missing_logs",
+    "missing_metrics",
+    "missing_traces",
+    "conflict_count"
+  ],
+  "feature_schema_version": "incident-lens-features-v1",
+  "method": "rules",
+  "ranking_semantics": "unusual service/window ranking; not a root-cause probability",
+  "selection_reason": "not measured: fewer than 8 independent training windows or no validation windows",
+  "source": {
+    "dataset": "RCAEval",
+    "dataset_revision": "RCAEval-HF@afeacb11bcc94dadfd1c8f483ee4377b2b8b614e",
+    "source_id": "rcaeval",
+    "source_version": "RCAEval@bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90",
+    "subset": "RE2-OB"
+  },
+  "source_manifest_hash": "802c7c26fa3ae58760bdebf1f67e9ab1112b3d39613b1a9e8e9dff84ac511901",
+  "training_rows": 1,
+  "validation_rows": 0
+}

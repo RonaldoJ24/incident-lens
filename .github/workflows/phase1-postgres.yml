@@ -1,0 +1,54 @@
+name: Phase 1 PostgreSQL
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "backend/**"
+      - "backend/migrations/**"
+      - "compose.yml"
+      - ".github/workflows/phase1-postgres.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "backend/migrations/**"
+      - "compose.yml"
+      - ".github/workflows/phase1-postgres.yml"
+
+jobs:
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: incident_lens
+          POSTGRES_USER: incident_lens
+          POSTGRES_PASSWORD: incident_lens_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U incident_lens -d incident_lens"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      INCIDENT_LENS_DATABASE_URL: postgresql://incident_lens:incident_lens_ci@localhost:5432/incident_lens
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: latest
+      - run: uv sync --project backend --locked
+      - run: uv run --project backend python -m incident_lens.migrations
+      - name: Require PostgreSQL integration execution
+        run: |
+          test -n "$INCIDENT_LENS_DATABASE_URL"
+          set -o pipefail
+          uv run --project backend python -m unittest backend/tests/test_postgres_integration.py -v 2>&1 | tee /tmp/postgres-integration.log
+          ! grep -q "skipped" /tmp/postgres-integration.log
+      - name: Run complete backend suite
+        run: uv run --project backend python -m unittest discover -s backend/tests -v

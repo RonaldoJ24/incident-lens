@@ -1,9 +1,11 @@
 # Local configuration and secret boundary
 
-Phase 0 has no live provider, database, object store, or connected application.
 The checked-in [`.env.example`](../.env.example) contains names only. Copy it
 to an untracked `.env` for local overrides; `.env`, secret directories, raw
 telemetry, uploads, derived artifacts, and model artifacts are ignored by Git.
+When `INCIDENT_LENS_DATABASE_URL` is set, the API selects its PostgreSQL store.
+When it is blank, `INCIDENT_LENS_SQLITE_PATH` (or its documented default) keeps
+zero-service local development available.
 
 Configuration is read at process startup and is scoped to the local process:
 
@@ -11,7 +13,8 @@ Configuration is read at process startup and is scoped to the local process:
 | --- | --- | --- | --- |
 | `INCIDENT_LENS_ENV` | Runtime environment label | No | `local` |
 | `INCIDENT_LENS_API_ORIGIN` | Browser API origin | No | `http://localhost:8000` |
-| `INCIDENT_LENS_DATABASE_URL` | Future PostgreSQL connection | Yes | unset |
+| `INCIDENT_LENS_DATABASE_URL` | PostgreSQL connection; selects the PostgreSQL store when set | Yes | unset (SQLite fallback) |
+| `INCIDENT_LENS_SQLITE_PATH` | SQLite path used when no PostgreSQL URL is set | No | `/tmp/incident-lens-phase1.sqlite3` |
 | `INCIDENT_LENS_OBJECT_STORE_BUCKET` | Future raw/derived artifact location | No | unset |
 | `INCIDENT_LENS_PROVIDER_API_KEY` | Future model provider credential | Yes | unset |
 

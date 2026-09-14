@@ -35,10 +35,15 @@ def check_public_manifest(path: Path) -> Dict[str, Any]:
     document = validate_manifest(path)
     try:
         cases = document.get("cases", [])
+        rows = document.get("rows", [])
         for location, value in _walk(cases, "cases"):
             if isinstance(value, str) and (_UPSTREAM_CASE.search(value) or _RAW_PATH.search(value)):
                 raise LeakageCheckError("source locator or raw path leakage at %s" % location)
+        for location, value in _walk(rows, "rows"):
+            if isinstance(value, str) and (_UPSTREAM_CASE.search(value) or _RAW_PATH.search(value)):
+                raise LeakageCheckError("source locator or raw path leakage at %s" % location)
         assert_no_leakage(cases)
+        assert_no_leakage(rows)
         if document.get("case_id") is not None:
             case_id = document.get("case_id")
             if not isinstance(case_id, str) or not re.fullmatch(r"dev-re2ob-\d{3}", case_id):

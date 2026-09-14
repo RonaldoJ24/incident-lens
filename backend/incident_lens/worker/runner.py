@@ -7,7 +7,7 @@ from typing import Dict, List
 import uuid
 
 from incident_lens.fixtures.loader import FixtureCase, load_cases
-from incident_lens.api.store import StateStore, iso, utc_now
+from incident_lens.api.store import StateStore, iso, parse_json, utc_now
 
 
 class BoundedInvestigationRunner:
@@ -30,7 +30,7 @@ class BoundedInvestigationRunner:
         self.store.update_run(run_id, "running")
         started = utc_now()
         started_clock = time.perf_counter()
-        run_interval = json.loads(run["provenance_json"])["source_interval"]
+        run_interval = parse_json(run["provenance_json"])["source_interval"]
         start = datetime.fromisoformat(run_interval["start"].replace("Z", "+00:00"))
         end = datetime.fromisoformat(run_interval["end"].replace("Z", "+00:00"))
         events = [
@@ -76,11 +76,11 @@ class BoundedInvestigationRunner:
         elif case.case_id == "degraded-performance":
             status = "succeeded"
             certainty = "uncertain"
-            assessment = "The authored fixture contains an unusual latency sample (%sms); a nearby release clue would not prove causality." % max_latency
+            assessment = "The authored fixture supports an unusual service/window ranking (latency sample %sms); a nearby release clue would not prove causality." % max_latency
         else:
             status = "succeeded"
             certainty = "uncertain"
-            assessment = "The authored fixture returned %d bounded records, including %d error record(s); this ranks unusual behavior but does not prove causality." % (len(events), error_events)
+            assessment = "The authored fixture returned %d bounded records, including %d error record(s); this supports an unusual service/window ranking but does not prove causality." % (len(events), error_events)
         self.store.insert_finding(
             run_id,
             {

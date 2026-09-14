@@ -1,0 +1,60 @@
+{
+  "report_version": "incident-lens-phase3-evaluation-v1",
+  "status": "not_measured",
+  "ranking_semantics": "unusual service/window ranking; not a root-cause probability",
+  "split": "validation",
+  "case_counts": {
+    "training_rows": 1,
+    "validation_rows": 0,
+    "training_cases": 1,
+    "validation_cases": 0,
+    "independent_training_groups": 1,
+    "independent_validation_groups": 0
+  },
+  "workload": { "validation_rows": 0, "runtime": "not measured" },
+  "versions": {
+    "artifact_version": "incident-lens-ranking-v1",
+    "feature_schema_version": "incident-lens-features-v1",
+    "artifact_sha256": "e06cde2d10b8a6bb4b031a357a844eff0be958a14ccd8b9ddfa60855e5fba75b",
+    "source_version": "RCAEval@bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90"
+  },
+  "metrics": {
+    "event_detection": "not measured",
+    "false_alarm_rate": "not measured",
+    "ranking": { "ndcg_at_5": "not measured", "mrr": "not measured" },
+    "anomaly": {
+      "event_detection": "not measured",
+      "false_alarm_rate": "not measured",
+      "ranking": { "ndcg_at_5": "not measured", "mrr": "not measured" }
+    },
+    "complete_investigation": {
+      "failing_service_identification": "not measured",
+      "useful_next_check": "not measured",
+      "evidence_support": "not measured",
+      "uncertainty_under_missing_or_conflicting_signals": "not measured"
+    }
+  },
+  "comparison": {
+    "model": "rules",
+    "error_rate_latency_rules": "error-rate-latency-rules-v1",
+    "status": "not measured",
+    "rationale": "Only one quality-reviewed development run is available and the independent validation split is empty; retain the transparent rules baseline.",
+    "score_summary": {
+      "model_mean": "not measured",
+      "rules_mean": "not measured",
+      "score_disagreement_count": "not measured"
+    }
+  },
+  "error_analysis": {
+    "false_alarms": "not measured: no reviewed event targets",
+    "missing_signals": {},
+    "conflicting_signals": 0,
+    "unseen_services": 0,
+    "insufficient_evidence": 0
+  },
+  "limitations": [
+    "Public manifests contain no hidden labels, source filenames, injection times, or per-case ground truth.",
+    "The final held-out manifest remains sealed and was not opened.",
+    "Statistical significance and complete-investigation quality are not measured."
+  ]
+}

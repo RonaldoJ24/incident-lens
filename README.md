@@ -6,11 +6,12 @@
 
 > **Status: Phase 1 local slice in progress; Phase 2 source work complete.** The
 > repository contains a runnable React/TypeScript and FastAPI/Pydantic slice
-> over a small authored SQLite fixture, plus a pinned, leakage-safe RCAEval
-> per-case adapter and deterministic offline normalization. PostgreSQL
-> persistence implementation and runtime verification remain pending; the
-> migration is a contract artifact only. Spark parity/isolation is verified in
-> CI; deployment, live connectors, and benchmark evaluation remain unverified.
+> over a small authored fixture, plus a pinned, leakage-safe RCAEval per-case
+> adapter and deterministic offline normalization. PostgreSQL persistence,
+> ordered migrations, a compose setup, and a required CI workflow are present;
+> the workflow has not yet been run from this checkout. SQLite remains the
+> zero-service fallback. Spark parity/isolation is verified in CI; deployment,
+> live connectors, and benchmark evaluation remain unverified.
 
 Incident Lens is a focused investigation workspace for the period after a
 checkout failure. An engineer selects a service and time window, reviews logs,
@@ -82,8 +83,8 @@ are documented in [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md). The exact
 foundation checks and their results are recorded in the Phase 0 evidence record
 in the implementation plan.
 
-The local Phase 1 commands, authored-fixture boundary, API flow, and pending
-PostgreSQL implementation and runtime/migration checks are documented in
+The local Phase 1 commands, authored-fixture boundary, API flow, and
+PostgreSQL/SQLite selection and migration checks are documented in
 [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
 
 There is no working demo URL, public screenshot set, measured result,
