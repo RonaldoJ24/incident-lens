@@ -64,7 +64,9 @@ def run_spark_normalization(
     except ImportError as exc:
         raise SparkUnavailableError("pyspark is not installed; run this job in the Spark CI environment") from exc
 
+    existing_session = SparkSession.getActiveSession()
     spark = SparkSession.builder.appName(app_name).getOrCreate()
+    owns_session = existing_session is None
     try:
         signal_summaries = []
         for signal in ("logs", "metrics", "traces"):
@@ -163,7 +165,8 @@ def run_spark_normalization(
         (output_root / ("manifest-%s.json" % case_id)).write_text(canonical_json(document) + "\n", encoding="utf-8")
         return document
     finally:
-        spark.stop()
+        if owns_session:
+            spark.stop()
 
 
 __all__ = ["SparkUnavailableError", "run_spark_normalization"]
