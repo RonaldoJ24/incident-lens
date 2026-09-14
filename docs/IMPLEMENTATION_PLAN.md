@@ -8,6 +8,31 @@ the listed artifacts and checks exist. Commands below are targets to establish;
 they must not be described as working until the repository contains and passes
 them.
 
+## Planning handoff
+
+**Planning review:** complete on 2026-09-13. **Application delivery:** not
+started. The product contract, eight-stage sequence, dependencies, acceptance
+gates, and open decisions are ready for implementation. Completing this review
+does not complete Phase 0 or prove any application behavior.
+
+The cited RCAEval project and dataset pages were checked during this review and
+support the planned 735-case total, the 90-case multi-source RE2-OB subset, and
+per-case access. The OpenTelemetry Demo and feature-flag pages also remain
+available as the planned separate controlled-runtime source. This is a source
+sanity check only: Phase 0 must still pin exact revisions and record license,
+attribution, redistribution, and derived-artifact terms before data is reused.
+
+| Phase | Current evidence | Next gate | Known decision or blocker |
+| --- | --- | --- | --- |
+| 0 | Product specification and delivery plan only | Scaffold, contracts, wireframe, and audited manifests pass their acceptance checks | No external blocker; package conventions, exact source pins, and 10–20 development cases require evidence-led selection |
+| 1 | None | Phase 0 contracts and design accepted | Blocked by Phase 0; actual build and test commands must be established from the scaffold |
+| 2 | None | Persistent state plus audited source manifests | Blocked by Phases 0–1; object-storage implementation and exact upstream revisions remain open |
+| 3 | None | Quality-reviewed, leakage-safe train/validation manifests | Blocked by Phase 2; method and thresholds remain evidence-led decisions |
+| 4 | None | Persistent workflow state, source metadata, and ranking output | Blocked by Phases 1–3; embedding/model provider remains unselected pending availability and evaluation |
+| 5 | None | Evidence workflow and upload/source contracts | Blocked by Phases 2 and 4; owned-app target/access is an external decision, and pilot outreach requires explicit authorization |
+| 6 | None | Prior phases complete, except explicitly documented external blockers after independent work finishes | Deployment target, budget, credentials, and domain access remain open; final test stays sealed until tuning decisions are fixed |
+| 7 | None | Verified public deployment and Phase 6 evidence | Blocked by Phase 6; any unresolved owned-connector access must remain visible in the presentation |
+
 ## Delivery rules
 
 - Keep the public README aligned with finished behavior and verified evidence.
@@ -23,9 +48,31 @@ them.
 - Record a short evidence note per phase: changed paths, command, result,
   fixture/version, and known limitation.
 
+## Phase evidence record
+
+Keep the table above current. When work changes a phase, append one compact,
+dated record under that phase before handoff. Use this form; remove fields that
+do not apply rather than filling them with guesses:
+
+```text
+Evidence record YYYY-MM-DD
+Status: not started | in progress | blocked | complete
+Changed paths: <repository-relative paths>
+Acceptance evidence: <artifact, screenshot, response, or report and where to inspect it>
+Checks: <exact command> — <pass/fail and decisive result>
+Fixture/source versions: <manifest, revision, model, provider, or not applicable>
+Known limitations/blockers: <specific unresolved item and independent work that can continue>
+Next gate: <single concrete acceptance gate>
+```
+
+`Complete` is valid only when every acceptance item in that phase has inspectable
+evidence. A command listed under “Checks to establish” is not evidence until it
+exists in the repository and its result is recorded.
+
 ## Phase 0 — Foundation, interfaces, design, and data audit
 
-**Status:** In progress — documentation foundation only.
+**Status:** In progress — specification and delivery plan established;
+application contracts, design artifacts, and data audit remain pending.
 
 **Dependencies:** none.
 
