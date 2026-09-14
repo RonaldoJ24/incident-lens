@@ -2,11 +2,11 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_DB: incident_lens
-      POSTGRES_USER: incident_lens
-      POSTGRES_PASSWORD: incident_lens_local
+      POSTGRES_DB: ${POSTGRES_DB:-incident_lens}
+      POSTGRES_USER: ${POSTGRES_USER:-incident_lens}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in an untracked .env file}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U incident_lens -d incident_lens"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 2s
       timeout: 3s
       retries: 15
@@ -19,7 +19,7 @@ services:
       dockerfile: backend/Dockerfile
     environment:
       INCIDENT_LENS_ENV: local
-      INCIDENT_LENS_DATABASE_URL: postgresql://incident_lens:incident_lens_local@postgres:5432/incident_lens
+      INCIDENT_LENS_DATABASE_URL: postgresql://${POSTGRES_USER:-incident_lens}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-incident_lens}
     depends_on:
       postgres:
         condition: service_healthy

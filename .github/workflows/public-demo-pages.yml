@@ -1,0 +1,48 @@
+name: Public authored-fixture demo
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/public-demo-pages.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - uses: actions/configure-pages@v5
+      - name: Install frontend dependencies
+        run: pnpm --dir frontend install --frozen-lockfile
+      - name: Build authored-fixture browser demo
+        env:
+          VITE_INCIDENT_LENS_DEMO: "1"
+          VITE_BASE_PATH: /incident-lens/
+        run: pnpm --dir frontend run build
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: frontend/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

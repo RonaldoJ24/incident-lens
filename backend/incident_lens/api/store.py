@@ -48,6 +48,11 @@ class StateStore:
         with self.lock:
             self.connection.close()
 
+    def healthcheck(self) -> bool:
+        with self.lock:
+            self.connection.execute("SELECT 1").fetchone()
+        return True
+
     def create_schema(self) -> None:
         with self.lock:
             self.connection.executescript(
@@ -363,6 +368,11 @@ class PostgresStateStore:
     def close(self) -> None:
         with self.lock:
             self.connection.close()
+
+    def healthcheck(self) -> bool:
+        with self.lock, self.connection.transaction():
+            self.connection.execute("SELECT 1").fetchone()
+        return True
 
     def create_schema(self) -> None:
         """Keep the SQLite-compatible store lifecycle for callers that expect it."""

@@ -18,6 +18,7 @@ pnpm --dir frontend dev
 For the PostgreSQL path, start the API and database together:
 
 ```sh
+cp .env.example .env  # edit POSTGRES_PASSWORD in this ignored file
 docker compose up --build
 ```
 
@@ -42,7 +43,13 @@ missing-signal, and untrusted-content counts; `GET`/`DELETE
 /v1/uploads/{upload_id}` remain isolated to the owning session, and DELETE can
 cancel an active streaming validation.
 The read-only connector status is available at `GET /v1/connectors/status` and
-stays `blocked` until an owned endpoint is configured and actually verified.
+stays `blocked` until an owned endpoint, exact host allowlist, and fixed path
+are configured. An explicit `GET /v1/connectors/verify` performs one bounded
+GET to that configured path and returns source/access metadata, content type,
+byte size, top-level keys, and a payload SHA-256 without returning the payload.
+The request has no path or verb selector, and verification is not persisted;
+the successful `verified` result is limited to that response and configuration
+changes require a new explicit verification.
 
 Focused validation:
 

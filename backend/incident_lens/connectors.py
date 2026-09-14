@@ -1,6 +1,7 @@
 """Read-only connector boundary with explicit host and response bounds."""
 
 import json
+import hashlib
 import os
 import socket
 from dataclasses import dataclass
@@ -30,6 +31,27 @@ class ConnectorResult:
     endpoint: str
     content_type: str
     byte_size: int
+    payload_sha256: str
+
+    def as_metadata(self) -> Dict[str, Any]:
+        """Return bounded verification metadata without returning the payload."""
+
+        keys = sorted(self.payload)[:100]
+        return {
+            "status": "verified",
+            "source_id": self.source_id,
+            "source_version": self.source_version,
+            "accessed_at": self.accessed_at,
+            "access_scope": self.access_scope,
+            "endpoint": self.endpoint,
+            "content_type": self.content_type,
+            "byte_size": self.byte_size,
+            "top_level_keys": keys,
+            "top_level_key_count": len(self.payload),
+            "top_level_keys_truncated": len(keys) < len(self.payload),
+            "payload_sha256": self.payload_sha256,
+            "telemetry_origin": "connected_app",
+        }
 
 
 @dataclass(frozen=True)
@@ -60,6 +82,7 @@ class ReadOnlyConnector:
         source_id: str = "owned-maintained-app",
         source_version: str = "configured",
         access_scope: str = "connected_app",
+        path: Optional[str] = None,
         timeout_seconds: float = 3.0,
         max_bytes: int = 2 * 1024 * 1024,
         require_https: bool = True,
@@ -82,12 +105,14 @@ class ReadOnlyConnector:
         self.source_id = source_id
         self.source_version = source_version
         self.access_scope = access_scope
+        self.path = path
         self.timeout_seconds = timeout_seconds
         self.max_bytes = max_bytes
         self.require_https = require_https
 
     def _url(self, path: str) -> str:
-        if not path or path.startswith("//") or "\\" in path:
+        parsed_path = urlsplit(path)
+        if not path or path.startswith("//") or "\\" in path or parsed_path.scheme or parsed_path.netloc:
             raise ConnectorError("connector path is invalid")
         target = urlsplit(urljoin(self.base_url, path))
         if target.scheme != self._base.scheme or target.hostname not in self.allowed_hosts:
@@ -98,7 +123,13 @@ class ReadOnlyConnector:
             raise ConnectorError("connector requires HTTPS")
         return target.geturl()
 
-    def get_json(self, path: str) -> ConnectorResult:
+    def get_json(self, path: Optional[str] = None) -> ConnectorResult:
+        if self.path is not None:
+            if path is not None and path != self.path:
+                raise ConnectorError("connector path is fixed by configuration")
+            path = self.path
+        if path is None:
+            raise ConnectorError("connector path is not configured")
         endpoint = self._url(path)
         request = Request(endpoint, method="GET", headers={"Accept": "application/json"})
         try:
@@ -129,19 +160,29 @@ class ReadOnlyConnector:
             endpoint=endpoint,
             content_type=content_type or "application/json",
             byte_size=len(body),
+            payload_sha256=hashlib.sha256(body).hexdigest(),
         )
+
+    def verify(self) -> ConnectorResult:
+        """Perform one bounded GET against the configured fixed path."""
+
+        if self.path is None:
+            raise ConnectorError("connector path is not configured")
+        return self.get_json()
 
 
 def connector_from_environment() -> Optional[ReadOnlyConnector]:
     base_url = os.getenv("INCIDENT_LENS_CONNECTOR_BASE_URL") or ""
     hosts = tuple(item for item in (os.getenv("INCIDENT_LENS_CONNECTOR_ALLOWED_HOSTS") or "").split(",") if item.strip())
-    if not base_url or not hosts:
+    path = os.getenv("INCIDENT_LENS_CONNECTOR_PATH") or ""
+    if not base_url or not hosts or not path:
         return None
     return ReadOnlyConnector(
         base_url,
         hosts,
         source_id=os.getenv("INCIDENT_LENS_CONNECTOR_SOURCE_ID", "owned-maintained-app"),
         source_version=os.getenv("INCIDENT_LENS_CONNECTOR_SOURCE_VERSION", "configured"),
+        path=path,
         require_https=os.getenv("INCIDENT_LENS_CONNECTOR_ALLOW_HTTP", "") != "1",
     )
 
@@ -149,8 +190,9 @@ def connector_from_environment() -> Optional[ReadOnlyConnector]:
 def connector_status() -> ConnectorStatus:
     base_url = os.getenv("INCIDENT_LENS_CONNECTOR_BASE_URL") or ""
     hosts = tuple(item.strip().lower() for item in (os.getenv("INCIDENT_LENS_CONNECTOR_ALLOWED_HOSTS") or "").split(",") if item.strip())
-    if not base_url or not hosts:
-        return ConnectorStatus("blocked", False, "owned endpoint and host allowlist are not configured", hosts)
+    path = os.getenv("INCIDENT_LENS_CONNECTOR_PATH") or ""
+    if not base_url or not hosts or not path:
+        return ConnectorStatus("blocked", False, "owned endpoint, fixed path, and host allowlist are not configured", hosts)
     try:
         connector_from_environment()
     except ConnectorError as exc:

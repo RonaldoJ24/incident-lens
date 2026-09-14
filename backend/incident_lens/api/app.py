@@ -31,8 +31,9 @@ from incident_lens.api.models import (
     WorkflowRequest,
     WorkflowResponse,
 )
-from incident_lens.connectors import connector_status
+from incident_lens.connectors import ConnectorError, connector_from_environment, connector_status
 from incident_lens.api.store import iso, parse_json, select_store, utc_now
+from incident_lens.observability import MetricsMiddleware, RequestMetrics
 from incident_lens.retrieval import HybridRetriever, KnowledgeIndex
 from incident_lens.uploads import SAMPLE_JSONL, UploadManager
 from incident_lens.worker.runner import BoundedInvestigationRunner
@@ -90,9 +91,12 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
     runner = BoundedInvestigationRunner(store)
     upload_manager = UploadManager()
     app = FastAPI(title="Incident Lens API", version=CONTRACT_VERSION)
+    metrics = RequestMetrics()
+    app.add_middleware(MetricsMiddleware, metrics=metrics)
     app.state.store = store
     app.state.runner = runner
     app.state.uploads = upload_manager
+    app.state.metrics = metrics
 
     def owned_run(run_id: str, session_id: Optional[str]) -> Dict[str, Any]:
         run = store.get_run(run_id)
@@ -105,6 +109,18 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
     @app.get("/health")
     def health() -> Dict[str, str]:
         return metadata()
+
+    @app.get("/health/ready")
+    def readiness() -> Dict[str, str]:
+        try:
+            store.healthcheck()
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="state store is unavailable") from exc
+        return {**metadata(), "status": "ready", "database_backend": type(store).__name__}
+
+    @app.get("/metrics", response_class=Response)
+    def metrics_endpoint() -> Response:
+        return Response(content=metrics.prometheus(), media_type="text/plain; version=0.0.4")
 
     @app.post("/v1/sessions", response_model=Session, status_code=201)
     def create_session() -> Session:
@@ -372,6 +388,19 @@ def create_app(db_path: Optional[str] = None, database_url: Optional[str] = None
     @app.get("/v1/connectors/status")
     def get_connector_status() -> Dict[str, Any]:
         return connector_status().as_dict()
+
+    @app.get("/v1/connectors/verify")
+    def verify_connector() -> Dict[str, Any]:
+        try:
+            connector = connector_from_environment()
+        except ConnectorError as exc:
+            raise HTTPException(status_code=409, detail="owned connector configuration is invalid") from exc
+        if connector is None:
+            raise HTTPException(status_code=409, detail="owned connector is not configured")
+        try:
+            return connector.verify().as_metadata()
+        except ConnectorError as exc:
+            raise HTTPException(status_code=502, detail="owned connector verification failed") from exc
 
     return app
 

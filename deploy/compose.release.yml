@@ -1,0 +1,24 @@
+# Provider-neutral release contract. Values are supplied by the deployment
+# secret manager; no public URL or hosting provider is selected here.
+services:
+  api:
+    image: ${INCIDENT_LENS_IMAGE:?Set an immutable, verified Incident Lens image reference}
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      INCIDENT_LENS_ENV: release
+      INCIDENT_LENS_DATABASE_URL: ${INCIDENT_LENS_DATABASE_URL:?Set the managed PostgreSQL URL through the secret manager}
+      INCIDENT_LENS_SQLITE_PATH: /tmp/disabled.sqlite3
+    command: ["sh", "-c", "python -m incident_lens.migrations && exec uvicorn incident_lens.api.app:app --host 0.0.0.0 --port 8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      start_period: 10s
+      retries: 3

@@ -1,0 +1,126 @@
+name: Phase 6 release checks
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "backend/**"
+      - "backend/migrations/**"
+      - "contracts/**"
+      - "data/manifests/**"
+      - "docs/evaluation/phase3-artifact-manifest.json"
+      - "frontend/**"
+      - "Makefile"
+      - "compose.yml"
+      - "deploy/**"
+      - ".github/workflows/phase6-release.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "backend/migrations/**"
+      - "contracts/**"
+      - "data/manifests/**"
+      - "docs/evaluation/phase3-artifact-manifest.json"
+      - "frontend/**"
+      - "Makefile"
+      - "compose.yml"
+      - "deploy/**"
+      - ".github/workflows/phase6-release.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: incident_lens
+          POSTGRES_USER: incident_lens
+          POSTGRES_PASSWORD: incident_lens_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U incident_lens -d incident_lens"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      INCIDENT_LENS_DATABASE_URL: postgresql://incident_lens:incident_lens_ci@localhost:5432/incident_lens
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.11.27"
+      - run: make setup-backend
+      - run: make contracts
+      - run: make integration-postgres
+      - run: make unit
+      - run: make leakage
+      - run: make injection
+      - run: make reproducibility
+      - run: make evaluate
+      - run: make performance PERF_SAMPLES=20
+      - run: make container-check
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.11.27"
+      - name: Install frontend dependencies
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.0 --activate
+          pnpm --dir frontend install --frozen-lockfile
+      - run: make frontend-check
+      - run: make visual-review
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate local compose rendering without committing a password
+        env:
+          POSTGRES_DB: incident_lens
+          POSTGRES_USER: incident_lens
+          POSTGRES_PASSWORD: ci-compose-only
+        run: docker compose config
+      - name: Build non-root API image
+        run: docker build --file backend/Dockerfile --tag incident-lens:ci .
+      - name: Exercise container health and workflow runtime path
+        run: |
+          set -eu
+          docker run --rm --detach --name incident-lens-ci -p 18000:8000 \
+            -e INCIDENT_LENS_DATABASE_URL= \
+            -e INCIDENT_LENS_SQLITE_PATH=/tmp/phase6.sqlite3 \
+            incident-lens:ci \
+            sh -c 'uvicorn incident_lens.api.app:app --host 0.0.0.0 --port 8000' >/tmp/incident-lens-container-id
+          cleanup() { docker logs incident-lens-ci || true; docker rm --force incident-lens-ci >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:18000/health/ready >/tmp/incident-lens-ready.json; then break; fi
+            sleep 1
+          done
+          test -s /tmp/incident-lens-ready.json
+          session_json=$(curl --fail --silent --request POST http://127.0.0.1:18000/v1/sessions)
+          session_id=$(python -c 'import json,sys; print(json.load(sys.stdin)["session_id"])' <<<"$session_json")
+          run_json=$(curl --fail --silent --request POST http://127.0.0.1:18000/v1/runs \
+            -H "Content-Type: application/json" \
+            --data "{\"session_id\":\"$session_id\",\"case_id\":\"checkout-failure\",\"service\":\"checkoutservice\"}")
+          run_id=$(python -c 'import json,sys; print(json.load(sys.stdin)["run_id"])' <<<"$run_json")
+          workflow_json=$(curl --fail --silent --request POST "http://127.0.0.1:18000/v1/runs/$run_id/workflow" \
+            -H "Content-Type: application/json" \
+            -H "X-Session-ID: $session_id" \
+            --data '{"query":"feature flag telemetry"}')
+          python -c 'import json,sys; value=json.load(sys.stdin); assert value["status"] == "completed"; assert value["retrieval_hits"]' <<<"$workflow_json"

@@ -6,6 +6,9 @@
     "description": "One bounded, read-only investigation API. Domain payloads use domain.schema.json v1."
   },
   "paths": {
+    "/health": { "get": { "operationId": "health", "responses": { "200": { "description": "Process liveness metadata" } } } },
+    "/health/ready": { "get": { "operationId": "readiness", "responses": { "200": { "description": "Selected state-store readiness" }, "503": { "description": "State store unavailable" } } } },
+    "/metrics": { "get": { "operationId": "metrics", "responses": { "200": { "description": "Bounded internal request metrics" } } } },
     "/v1/sessions": { "post": { "operationId": "createGuestSession", "responses": { "201": { "description": "Guest session", "content": { "application/json": { "schema": { "$ref": "domain.schema.json#/$defs/Session" } } } } } } },
     "/v1/cases": { "get": { "operationId": "listCases", "responses": { "200": { "description": "Neutral case summaries" } } } },
     "/v1/runs": { "post": { "operationId": "startRun", "responses": { "202": { "description": "Queued investigation run" } } } },
@@ -19,7 +22,8 @@
     "/v1/uploads/initiate": { "post": { "operationId": "initiateUpload", "responses": { "201": { "description": "Guest-isolated upload slot" } } } },
     "/v1/uploads": { "post": { "operationId": "validateUpload", "responses": { "200": { "description": "Bounded JSONL validation result" } } } },
     "/v1/uploads/{uploadId}": { "parameters": [{ "$ref": "#/components/parameters/UploadId" }], "get": { "operationId": "getUpload", "responses": { "200": { "description": "Guest-isolated upload validation result" } } }, "put": { "operationId": "streamUpload", "responses": { "200": { "description": "Bounded JSONL validation result" } } }, "delete": { "operationId": "cancelUpload", "responses": { "200": { "description": "Upload cancellation result" } } } },
-    "/v1/connectors/status": { "get": { "operationId": "getConnectorStatus", "responses": { "200": { "description": "Read-only connector configuration status" } } } },
+    "/v1/connectors/status": { "get": { "operationId": "getConnectorStatus", "responses": { "200": { "description": "Read-only connector configuration status; remains blocked until explicitly verified" } } } },
+    "/v1/connectors/verify": { "get": { "operationId": "verifyConnector", "description": "Perform one bounded GET against the configured fixed connector path and return metadata only; the response payload is never returned.", "responses": { "200": { "description": "Verified connected-app metadata without the raw payload" }, "409": { "description": "Connector is unconfigured or configuration is invalid" }, "502": { "description": "Connector request failed or violated its response boundary" } } } },
     "/v1/reports": { "post": { "operationId": "saveReportRevision", "responses": { "201": { "description": "Immutable report revision" } } } },
     "/v1/reports/{reportId}/export": { "parameters": [{ "$ref": "#/components/parameters/ReportId" }], "post": { "operationId": "exportReport", "responses": { "200": { "description": "Downloadable JSON report containing report metadata, provenance, findings, evidence, and timeline" } } } }
   },

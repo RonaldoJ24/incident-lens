@@ -1,6 +1,8 @@
 # Incident Lens implementation plan
 
-**Overall status:** Phases 0 and 2 complete; Phase 1 local slice in progress.
+**Overall status:** Phases 0–2 complete. Phase 3 is blocked at its semantic
+audit gate, Phase 4 is in progress, Phase 5 has a verified bounded owned-app
+connector but an unrun pilot, and Phases 6–7 are in progress.
 
 This plan is the source of truth for phase status and acceptance evidence. A
 phase may begin when its dependencies are met, but it is not complete until
@@ -10,9 +12,11 @@ them.
 
 ## Planning handoff
 
-**Planning review:** complete on 2026-09-13. **Application delivery:** Phase 1
-local slice in progress and Phase 2 complete. The product contract, eight-stage sequence,
-dependencies, acceptance gates, and open decisions remain the source of truth.
+**Planning review:** complete on 2026-09-13. **Application delivery:** the
+persistent API/source foundations are verified; the ranking and provider-backed
+investigation gates remain incomplete. The product contract, eight-stage
+sequence, dependencies, acceptance gates, and open decisions remain the source
+of truth.
 
 The cited RCAEval project and dataset pages were checked during this review and
 support the planned 735-case total, the 90-case multi-source RE2-OB subset, and
@@ -23,14 +27,14 @@ attribution, redistribution, and derived-artifact terms before data is reused.
 
 | Phase | Current evidence | Next gate | Known decision or blocker |
 | --- | --- | --- | --- |
-| 0 | Scaffold, v1 contracts, rendered wireframe, audited manifests, and focused validation pass (evidence record below) | Phase 1 runnable vertical slice | No external blocker; per-case telemetry fetch and final development selection remain Phase 2 evidence-led work |
-| 1 | Local SQLite API, authored fixture worker, React Investigate shell, PostgreSQL adapter, ordered migrations, compose setup, CI integration workflow, API flow tests, and four-width browser review (evidence record below) | PostgreSQL runtime verification in the required CI workflow | Docker and PostgreSQL are unavailable on this host; the workflow is added but has not run from this checkout |
-| 2 | Pinned per-case source adapter, portable/Spark deterministic normalization, separate controlled-runtime schema, artifact layout, one reviewed real-case quality report, and passing Spark CI (evidence record below) | Phase 3 quality-reviewed training/validation inputs | Eleven selected development cases still have unknown completeness; PostgreSQL runtime verification remains the Phase 1 CI gate |
-| 3 | Leakage-safe grouped train/validation manifests, deterministic rules artifact, sealed-test policy, and aggregate report (model comparison not measured) | Additional quality-reviewed independent runs for model/rule evaluation | Only one reviewed development run is available; final held-out data remains sealed |
-| 4 | Local deterministic hybrid retrieval, source/version citations, typed LangGraph workflow, durable checkpoints, review support, and hostile-log/source-withholding tests (evidence record below) | PostgreSQL runtime and browser workflow verification | Provider-backed retrieval, live connector, and production benchmark evidence remain unverified |
-| 5 | Bounded JSONL guest upload service, sample/status/cancel API, quota and provider replay policy, strict read-only connector boundary, local fixture/server tests (evidence record below) | Authorized owned-app endpoint/access and guest browser review | Owned endpoint and credentials are unavailable; connector remains blocked and pilot outreach requires explicit authorization |
-| 6 | None | Prior phases complete, except explicitly documented external blockers after independent work finishes | Deployment target, budget, credentials, and domain access remain open; final test stays sealed until tuning decisions are fixed |
-| 7 | None | Verified public deployment and Phase 6 evidence | Blocked by Phase 6; any unresolved owned-connector access must remain visible in the presentation |
+| 0 | Scaffold, v1 contracts, rendered wireframe, audited manifests, and focused validation pass | Complete | No current Phase 0 blocker |
+| 1 | React/FastAPI slice, SQLite fallback, PostgreSQL store/migrations, API flow tests, and PostgreSQL 16 CI run `34816819576` | Complete | Local Docker is unavailable; the required PostgreSQL path is verified in CI |
+| 2 | Pinned per-case adapter, portable/Spark normalization, isolation checks, reviewed real-case report, and Spark CI run `34813930327` | Complete | Raw telemetry and protected locators remain outside Git by design |
+| 3 | Real grouped train/validation rows, rules/Isolation Forest comparison, artifact verification, and sealed final-test policy | Correct feature semantics and per-run operational metrics before model selection | Audit found unsupported latency naming and globally aggregated/non-operational metrics; current report is provisional and final held-out remains sealed |
+| 4 | Local TF-IDF/LSA retrieval, citations, typed compiled LangGraph, durable checkpoints, review, recovery, and hostile-input tests | Select and evaluate a real model/provider and substantive retrieval corpus | Current retrieval corpus/evaluation is too small and the fixed claim path is not a grounded generative provider |
+| 5 | Bounded guest upload flow plus fixed-path, metadata-only live verification of the owned `cadencia-ai` GitHub Actions feed | Keep live connector scope explicit; pilot outreach requires authorization | Connector evidence is CI metadata, not application incident telemetry; pilot protocol is unrun |
+| 6 | Reproducible release checks, container/CI contract, runbooks, threat/model cards, controlled workload, and four-width browser-local visual review | Verify the new release/container CI and public preview; full backend hosting remains open | Final held-out stays sealed; provider cost/hosted latency and full browser/API integration are not measured |
+| 7 | Static authored-fixture preview and Pages workflow implemented | Verify a public Pages URL and rewrite the README around only verified behavior | Static preview is not the FastAPI/PostgreSQL/provider-backed application |
 
 ## Delivery rules
 
@@ -122,10 +126,9 @@ Next gate: Phase 1 runnable vertical slice with persistent state and actual brow
 
 ## Phase 1 — Runnable vertical slice
 
-**Status:** In progress — local SQLite API, authored fixture worker, React
-shell, PostgreSQL-backed store, ordered migrations, compose setup, focused flow
-tests, and browser review are implemented. PostgreSQL runtime verification is
-required in CI and has not run from this checkout.
+**Status:** Complete — local SQLite and PostgreSQL-backed paths, ordered
+migrations, the React investigation shell, focused flow tests, and PostgreSQL
+16 CI verification are recorded.
 
 **Dependencies:** Phase 0 contracts and design decisions.
 
@@ -165,13 +168,13 @@ required in CI and has not run from this checkout.
 - `pnpm --dir frontend e2e -- --width=1440`
 
 Evidence record 2026-09-14
-Status: in progress
+Status: complete
 Changed paths: `backend/incident_lens/api/store.py`, `backend/incident_lens/api/app.py`, `backend/incident_lens/migrations.py`, `backend/migrations/`, `backend/tests/test_postgres_integration.py`, `backend/pyproject.toml`, `backend/uv.lock`, `backend/Dockerfile`, `compose.yml`, `.github/workflows/phase1-postgres.yml`, `.env.example`, `docs/CONFIGURATION.md`, `docs/LOCAL_DEVELOPMENT.md`, `README.md`
-Acceptance evidence: local API flow in `backend/tests/test_api.py` covers session creation, three distinct case outcomes, UTC window preservation, evidence/findings/single-event timeline retrieval, guest isolation, cancellation, retry attempt, review history, reload from SQLite, idempotent report save, and downloadable JSON export; `PostgresStateStore` uses parameterized SQL, JSONB payloads, explicit transaction contexts, foreign-key constraints, and unique-key idempotency; `backend/incident_lens/migrations.py` applies 001 then 002 with version tracking; `backend/tests/test_postgres_integration.py` covers the PostgreSQL API flow, reload persistence, rollback, concurrent idempotent writes, and migration records; compose and CI configuration are checked in
-Checks: `uv run --project backend python -m unittest discover -s backend/tests -v` — local SQLite/Phase 2 tests pass with PostgreSQL tests skipped because no URL is configured; `uv lock --project backend --check` — pass; PostgreSQL CI workflow — added, not run from this checkout; Docker/PostgreSQL runtime — unavailable on this host
-Fixture/source versions: authored synthetic controlled fixture `fixture-v1`; FastAPI `0.141.1`; Pydantic `2.13.5`; SQLite local store; PostgreSQL migration `001_initial.sql`
-Known limitations/blockers: Docker/PostgreSQL are unavailable on this host, so the newly added migration/runtime workflow remains unverified here; browser review was interactive and no screenshots are checked in yet; request-triggered FastAPI BackgroundTasks are bounded but durable queue/restart behavior remains Phase 4 work; fixture is not RCAEval or live telemetry
-Next gate: run `.github/workflows/phase1-postgres.yml` successfully against PostgreSQL 16 and retain its result; Phase 2 source-adapter work remains independently complete
+Acceptance evidence: local API flow in `backend/tests/test_api.py` covers session creation, three distinct case outcomes, UTC window preservation, evidence/findings/timeline retrieval, guest isolation, cancellation, retry, review history, reload from SQLite, idempotent report save, and downloadable JSON export; `PostgresStateStore` uses parameterized SQL, JSONB payloads, explicit transactions, foreign keys, and unique-key idempotency; `backend/tests/test_postgres_integration.py` covers migrations, persistence across reload, rollback, concurrent idempotency, and ownership against PostgreSQL 16
+Checks: PostgreSQL CI workflow run `34816819576` — pass (3 live PostgreSQL integration tests and the complete then-current backend suite); `uv lock --project backend --check` — pass; local browser review — pass with screenshots inspected but not checked in
+Fixture/source versions: authored synthetic controlled fixture `fixture-v1`; SQLite local fallback; PostgreSQL 16; migrations `001_initial.sql` through `003_workflow_checkpoints.sql`
+Known limitations/blockers: Docker/PostgreSQL are unavailable on this host, so local container execution is deferred to CI; the fixture is authored controlled data, not RCAEval or live telemetry
+Next gate: complete the later provider-backed retrieval and release gates without reopening Phase 1
 
 ## Phase 2 — Real source adapters and data isolation
 
@@ -219,9 +222,9 @@ Next gate: produce leakage-safe, quality-reviewed training and validation inputs
 
 ## Phase 3 — ML train, evaluate, and serve
 
-**Status:** In progress — deterministic rules artifact and validation contract are implemented;
-model comparison remains explicitly not measured until an independent reviewed
-validation run exists.
+**Status:** Blocked — a real grouped rules/Isolation Forest comparison exists,
+but its current feature names and aggregate metrics failed semantic review. The
+checked-in report is provisional and cannot select a model or threshold.
 
 **Dependencies:** Phase 2 quality-reviewed manifests and enough development
 cases to make comparisons meaningful.
@@ -263,21 +266,21 @@ cases to make comparisons meaningful.
 - `python -m incident_lens.ml.verify_artifact artifacts/model-manifest.json`
 
 Evidence record 2026-09-14
-Status: in progress
+Status: blocked
 Changed paths: `backend/incident_lens/ml/`, `backend/tests/test_phase3_ml.py`, `backend/pyproject.toml`, `backend/uv.lock`, `data/manifests/train.json`, `data/manifests/validation.json`, `docs/evaluation/phase3-artifact-manifest.json`, `docs/evaluation/phase3-validation-report.json`, `frontend/src/App.tsx`, `backend/incident_lens/worker/runner.py`
-Acceptance evidence: public grouped train/validation manifests contain only neutral IDs and aggregate features; `docs/evaluation/phase3-artifact-manifest.json` verifies the rules artifact; `docs/evaluation/phase3-validation-report.json` records event/anomaly and complete-investigation metrics as not measured; serving response semantics and local worker/UI language use unusual service/window ranking
-Checks: `PYTHONPATH=backend backend/.venv/bin/python -m unittest backend/tests/test_phase3_ml.py -v` — pass (8 tests); `PYTHONPATH=backend backend/.venv/bin/python -m incident_lens.validation.manifests data/manifests` — pass (5 manifests); `PYTHONPATH=backend backend/.venv/bin/python -m incident_lens.pipeline.check_leakage data/manifests` — pass; `PYTHONPATH=backend backend/.venv/bin/python -m incident_lens.ml.train --manifest data/manifests/train.json --validation-manifest data/manifests/validation.json --output artifacts/model-manifest.json` — pass (rules, 1 training row, 0 validation rows); `PYTHONPATH=backend backend/.venv/bin/python -m incident_lens.ml.verify_artifact docs/evaluation/phase3-artifact-manifest.json` — pass; `PYTHONPATH=backend backend/.venv/bin/python -m incident_lens.ml.validate --manifest data/manifests/validation.json` — pass (`not_measured`); `uv lock --project backend --check` — pass; `git diff --check` — pass
+Acceptance evidence: public grouped train/validation manifests contain neutral IDs and aggregate rows; `docs/evaluation/phase3-artifact-manifest.json` verifies the artifact bytes; the report compares rules and Isolation Forest but is explicitly provisional; serving/UI language uses unusual service/window ranking rather than a causal probability
+Checks: Phase 3 tests, manifest validation, leakage checks, artifact verification, and mechanical validation pass; semantic acceptance fails because source `latency-90` samples were labeled as mean/p95 features and MRR/false-alarm metrics were globally aggregated rather than computed per independent run at an operational alert policy
 Fixture/source versions: RCAEval `bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90`; Hugging Face `afeacb11bcc94dadfd1c8f483ee4377b2b8b614e`; normalization `incident-lens-normalization-v1`; artifact `incident-lens-ranking-v1`; feature schema `incident-lens-features-v1`
-Known limitations/blockers: only one quality-reviewed development run is available, so Isolation Forest and rule comparison are not measured; validation is empty until an independent reviewed run is available; final held-out manifest remains sealed; PostgreSQL runtime verification remains the Phase 1 CI gate
-Next gate: quality-review an independent development run and populate validation without opening the final held-out manifest
+Known limitations/blockers: current model selection and thresholds are not accepted; complete-investigation quality is not measured; final held-out manifest remains sealed
+Next gate: correct feature semantics and per-run ranking/false-alarm evaluation, freeze the resulting model/retrieval/provider decisions, and only then authorize final-held-out evaluation
 
 ## Phase 4 — RAG and persistent evidence workflow
 
 **Status:** In progress — local deterministic retrieval, typed LangGraph
 workflow, evidence support evaluation, hostile-log handling, source
 withholding, checkpoint/restart/cancel/retry, and idempotent reports are
-implemented and locally tested. Provider-backed retrieval and PostgreSQL
-runtime evidence remain unverified.
+implemented and locally tested. PostgreSQL runtime is verified in CI, while a
+real model/provider and substantive retrieval evaluation remain unimplemented.
 
 **Dependencies:** Phase 1 workflow state and Phase 2 source/version metadata;
 Phase 3 ranking output for a complete comparison.
@@ -314,14 +317,14 @@ Status: in progress
 Changed paths: `backend/incident_lens/retrieval/`, `backend/incident_lens/evaluation/`, `backend/incident_lens/workflow/`, `backend/incident_lens/api/`, `backend/tests/test_phase4_workflow.py`, `backend/migrations/003_workflow_checkpoints.sql`, `data/knowledge/verified-runbooks-v1.json`, `data/manifests/retrieval.json`, `backend/incident_lens/fixtures/hostile_logs.json`, `docs/evaluation/phase4-retrieval-report.json`, `docs/evaluation/phase4-workflow-evidence.md`, `frontend/src/App.tsx`, `contracts/v1/api.openapi.json`
 Acceptance evidence: the normal run and checkpoint-resume paths invoke a compiled LangGraph with typed state; each successful node persists the correct next-node checkpoint before advancing, and a persisted time budget is checked before every node and on resume, recording bounded failure when exhausted; the small manual path is limited to cancellation/partial-stop control; allowlisted read-only fixture inspection, bounded retries and measured timeline durations are recorded; retrieval hits and generated claims carry source/version citations and support status; source withholding changes retrieval context; duplicate completed delivery reuses one report revision; hostile log content remains data and arbitrary shell/SQL is rejected
 Checks: `uv run --project backend python -m unittest discover -s backend/tests -v` — 62 passed, 3 PostgreSQL tests skipped because `INCIDENT_LENS_DATABASE_URL` is unset; `pnpm --dir frontend run lint && pnpm --dir frontend run typecheck && pnpm --dir frontend test && pnpm --dir frontend run build` — pass; `uv run --project backend python -m incident_lens.validation.manifests data/manifests` — pass (6); `uv run --project backend python -m incident_lens.pipeline.check_leakage data/manifests` — pass; `uv run --project backend python -m incident_lens.validation.local README.md docs backend contracts data .env.example frontend/src` — pass; `uv run --project backend python -m compileall -q backend/incident_lens` — pass; `uv lock --project backend --check` — pass; `git diff --check` — pass
-Known limitations/blockers: no provider-backed retrieval, Docker/PostgreSQL runtime, browser/e2e, or live connector evidence; generated fixture evaluation is not production evidence
-Next gate: verify PostgreSQL migration/runtime and browser workflow before calling Phase 4 complete
+Known limitations/blockers: retrieval uses a three-document local corpus and a trivial Recall@3 check; the fixed claim scaffold is not a grounded generative provider; browser evidence covers the authored static preview rather than the full API path
+Next gate: select an available provider/model, ground generated claims over a substantive verified corpus, and evaluate retrieval and claim support separately
 
 ## Phase 5 — Guest testing, uploads, and owned live connector
 
 **Status:** In progress — bounded guest upload validation, quota/policy helpers,
-and a strict read-only connector boundary are implemented and locally tested;
-owned-app access remains blocked.
+and a strict read-only connector are implemented. One live fixed-path HTTPS
+verification against the owned `cadencia-ai` application is recorded.
 
 **Dependencies:** Phase 4 evidence workflow and Phase 2 upload/source contracts.
 
@@ -353,12 +356,12 @@ owned-app access remains blocked.
 
 Evidence record 2026-09-14
 Status: in progress
-Changed paths: `backend/incident_lens/uploads.py`, `backend/incident_lens/connectors.py`, `backend/incident_lens/provider_policy.py`, `backend/incident_lens/api/app.py`, `backend/tests/fixtures/uploads/`, `backend/tests/test_phase5_uploads.py`, `backend/tests/test_phase5_connector.py`, `contracts/v1/api.openapi.json`, `contracts/v1/domain.schema.json`, `.env.example`, `docs/CONFIGURATION.md`, `docs/evaluation/phase5-pilot-protocol.md`
-Acceptance evidence: streamed JSONL validation enforces 10 MiB/256 KiB/10,000-record bounds, strict event fields, retention cleanup, per-session lookup/cancellation, duplicate/conflict/missing-signal/untrusted counts, and per-session byte/record/cost budgets; sample download and upload status/cancel endpoints are available; provider failure/replay decisions preserve `new_analysis` versus `stored_result`; `ReadOnlyConnector` permits bounded GET-only JSON through exact host allowlisting and returns source/version/access-time metadata; local controlled HTTP server tests are explicitly test evidence; the [pilot protocol](evaluation/phase5-pilot-protocol.md) is executable but explicitly UNRUN, with no participant evidence claimed
-Checks: `uv run --project backend python -m unittest backend.tests.test_phase5_uploads backend.tests.test_phase5_connector -v` — pass; live connector — not run
-Fixture/source versions: authored Phase 5 JSONL fixtures; controlled HTTP server fixture; no owned endpoint or credentials
-Known limitations/blockers: no owned maintained application endpoint or credentials are configured, so connector status remains explicitly blocked and no live connected-app result is claimed; the [pilot protocol](evaluation/phase5-pilot-protocol.md) is explicitly UNRUN and no participants have been contacted; upload records are process-local until the persistent workflow phase
-Next gate: obtain authorized owned-app endpoint/configuration and run the read-only connector against it with recorded access metadata
+Changed paths: `backend/incident_lens/uploads.py`, `backend/incident_lens/connectors.py`, `backend/incident_lens/provider_policy.py`, `backend/incident_lens/api/app.py`, `backend/tests/fixtures/uploads/`, `backend/tests/test_phase5_uploads.py`, `backend/tests/test_phase5_connector.py`, `contracts/v1/api.openapi.json`, `contracts/v1/domain.schema.json`, `.env.example`, `docs/CONFIGURATION.md`, `docs/evaluation/phase5-pilot-protocol.md`, `docs/evaluation/phase5-live-connector.md`
+Acceptance evidence: streamed JSONL validation enforces 10 MiB/256 KiB/10,000-record bounds, strict event fields, retention cleanup, isolation, cancellation, duplicate/conflict/missing/untrusted counts, and per-session budgets; `GET /v1/connectors/verify` performs one GET to a configured fixed path and returns source/access metadata, bounded top-level keys, and a payload digest without returning raw data; the [live evidence note](evaluation/phase5-live-connector.md) records a successful bounded call to the owned maintained `cadencia-ai` GitHub Actions feed; the [pilot protocol](evaluation/phase5-pilot-protocol.md) is executable but explicitly unrun
+Checks: connector/upload focused tests — pass; full local backend suite — 70 passed, 3 PostgreSQL skips; live connector — verified `application/json`, 64,694 bytes, five returned workflow runs at the recorded access time
+Fixture/source versions: authored Phase 5 JSONL fixtures; controlled HTTP server fixture; `github-actions:RonaldoJ24/cadencia-ai` / `github-actions-v3`
+Known limitations/blockers: the live connector evidence is CI/operational metadata, not application incident telemetry; its public default configuration remains empty; the pilot is unrun and no participants were contacted; uploads remain process-local
+Next gate: retain the connector's narrow scope in the public presentation and run the pilot only with explicit outreach authorization
 
 **Checks to establish**
 
@@ -369,7 +372,12 @@ Next gate: obtain authorized owned-app endpoint/configuration and run the read-o
 
 ## Phase 6 — Hardened deployment, evaluation, and visual QA
 
-**Status:** Not started.
+**Status:** In progress — reproducible local release checks, provider-neutral
+deployment contract, container hardening, readiness/metrics hooks, rollback
+runbook, threat/access review, model/data card, and controlled workload
+measurement are implemented. Browser-local visual review is recorded, while
+public deployment, full API/PostgreSQL browser integration, and final held-out
+evaluation remain unverified/sealed.
 
 **Dependencies:** Phases 1–5 complete or documented blockers with independent
 work finished.
@@ -377,38 +385,60 @@ work finished.
 **Deliverables**
 
 - Reproducible local/container setup, migrations, CI, observability, secret
-  management, deployment, rollback, and runbook.
+  management, deployment contract, rollback, and runbook.
 - A verified public deployment, required for intended delivery, plus frozen
   final/held-out evaluation and separate controlled telemetry results. The final
   test remains sealed until model, threshold, retrieval, and prompt decisions
   are fixed.
-- Measurement of p50/p95 latency, cost, completion, recovery, and supported
-  upload workloads with sample sizes and versions.
+- Measurement of p50/p95 latency, completion, recovery, and supported upload
+  workloads with sample sizes and versions. Provider cost remains explicitly
+  not measured.
 - Browser visual review with actual screenshots and interaction checks at all
   four target widths, including keyboard, focus, error, and mobile states.
 - Final threat/access review and a concise model/data card.
 
 **Acceptance evidence**
 
-- A fresh checkout follows the exact documented setup, migration, demo, test,
-  and rollback commands. Every command in the README has been run against the
-  verified public deployment.
-- CI verifies contracts, unit/integration/e2e checks, leakage/injection tests,
-  and reproducibility checks.
-- Published results include failures, limits, workload, sample size, and
-  artifact versions. Model/anomaly metrics are separate from complete
-  investigation quality. No unmeasured badge or scale claim is added.
-- Rendered browser review confirms the findings/evidence/timeline hierarchy at
-  1440, 1280, 768, and 390 CSS pixels.
+- `Makefile` exposes setup, unit/integration, contracts, leakage/injection,
+  reproducibility, evaluation, performance, frontend, visual-review, and
+  release-check targets without opening final-held-out data.
+- CI workflow `phase6-release.yml` verifies contracts, unit/PostgreSQL
+  integration, frontend build, leakage/injection, reproducibility, controlled
+  performance, container rendering, and non-root image checks.
+- `docs/OPERATIONS.md`, `docs/THREAT_MODEL.md`, and `deploy/` document
+  migrations, rollback, health/metrics, secret boundaries, and a provider/
+  URL-neutral release contract.
+- `docs/evaluation/phase6-performance.md` records local controlled workload
+  results with failures, limits, sample sizes, and versions. Provider cost,
+  hosted latency, public deployment, and live connector performance remain not
+  measured.
+- [Browser visual review evidence](evaluation/phase6-visual-review.md) records
+  the dated browser-local authored preview review, responsive layout checks,
+  keyboard focus, upload, source-withholding, save/export, reload, and
+  uncertainty flows. Screenshots were captured and inspected interactively but
+  are not checked in. No full FastAPI/PostgreSQL, public deployment, provider,
+  connector, or repair claim follows from this review.
 
 **Checks to establish**
 
-- `docker compose up --build`
-- `docker compose run --rm api alembic upgrade head`
-- `make test`
+- `make setup`
+- `make release-check`
+- `docker compose config` with `POSTGRES_PASSWORD` supplied only through an
+  ignored environment file
 - `make evaluate`
 - `make visual-review`
-- `make rollback VERSION=<verified-version>`
+- Follow the rollback procedure in `docs/OPERATIONS.md` using a managed
+  PostgreSQL snapshot and an immutable prior image; no destructive down
+  migration is provided.
+
+Evidence record 2026-09-14
+Status: in progress
+Changed paths: `Makefile`, `.github/workflows/phase6-release.yml`, `backend/Dockerfile`, `backend/incident_lens/observability.py`, `backend/incident_lens/validation/performance.py`, `backend/incident_lens/api/app.py`, `backend/incident_lens/api/store.py`, `backend/tests/test_phase6_release.py`, `contracts/v1/api.openapi.json`, `compose.yml`, `deploy/compose.release.yml`, `deploy/README.md`, `.env.example`, `README.md`, `docs/CONFIGURATION.md`, `docs/LOCAL_DEVELOPMENT.md`, `docs/OPERATIONS.md`, `docs/THREAT_MODEL.md`, `docs/MODEL_DATA_CARD.md`, `docs/evaluation/phase6-performance.md`, `docs/evaluation/phase6-visual-review.md`
+Acceptance evidence: local release command surface, provider-neutral release compose contract, non-root/healthchecked API image, readiness and bounded metrics endpoints, migration/rollback runbook, threat/access review, model/data card, and controlled workload measurement report
+Checks: `make release-check PERF_SAMPLES=20` — pass; full backend discovery ran 67 tests with 3 PostgreSQL skips because no `INCIDENT_LENS_DATABASE_URL` is configured; contracts, leakage, injection, reproducibility, artifact verification/validation, readiness/metrics/container boundary tests, and local controlled workload measurement passed; frontend lint/typecheck/test/build passed; `uv lock --project backend --check` — pass; `uv run --project backend python -m compileall -q backend/incident_lens` — pass; local link/privacy validator — pass; `git diff --check` — pass; compose files parsed with Ruby YAML because Docker is unavailable
+Fixture/source versions: authored `fixture-v1`, Phase 5 upload sample `phase5-upload-v1`, Phase 3 artifact `incident-lens-ranking-v1`, workload `phase6-local-controlled-v1`
+Known limitations/blockers: no public deployment/provider/URL or owned connector is configured; provider cost and hosted latency are not measured; the browser evidence covers only the browser-local authored static preview, not full FastAPI/PostgreSQL integration; screenshots are not checked in; final held-out data remains sealed
+Next gate: execute the required CI workflow, verify the full API/PostgreSQL browser path if available, and preserve the explicit public deployment/provider/connector blockers before describing Phase 6 as complete
 
 ## Phase 7 — Final public presentation
 

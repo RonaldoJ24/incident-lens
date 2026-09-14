@@ -88,6 +88,15 @@ The local Phase 1 commands, authored-fixture boundary, API flow, and
 PostgreSQL/SQLite selection and migration checks are documented in
 [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
 
+Release hardening commands, readiness/metrics behavior, migration rollback,
+threat/access review, model/data limits, and the provider-neutral deployment
+contract are documented in [`docs/OPERATIONS.md`](docs/OPERATIONS.md),
+[`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md),
+[`docs/MODEL_DATA_CARD.md`](docs/MODEL_DATA_CARD.md), and [`deploy/`](deploy/).
+The reproducible command surface is the root [`Makefile`](Makefile). No public
+deployment, provider URL, live connector, browser screenshot set, or final
+held-out result is claimed.
+
 There is no working demo URL, public screenshot set, measured result,
 deployment, or live connector to report yet. The local API quickstart is for
 the authored fixture only. Public deployment and the owned connector are
