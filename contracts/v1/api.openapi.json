@@ -1,0 +1,27 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Incident Lens API",
+    "version": "v1",
+    "description": "One bounded, read-only investigation API. Domain payloads use domain.schema.json v1."
+  },
+  "paths": {
+    "/v1/sessions": { "post": { "operationId": "createGuestSession", "responses": { "201": { "description": "Guest session", "content": { "application/json": { "schema": { "$ref": "domain.schema.json#/$defs/Session" } } } } } } },
+    "/v1/cases": { "get": { "operationId": "listCases", "responses": { "200": { "description": "Neutral case summaries" } } } },
+    "/v1/runs": { "post": { "operationId": "startRun", "responses": { "202": { "description": "Queued investigation run" } } } },
+    "/v1/runs/{runId}": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "get": { "operationId": "getRun", "responses": { "200": { "description": "Run with independent provenance" } } }, "delete": { "operationId": "cancelRun", "responses": { "202": { "description": "Cancellation requested" } } } },
+    "/v1/runs/{runId}/findings": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "get": { "operationId": "listFindings", "responses": { "200": { "description": "Findings linked to evidence IDs" } } } },
+    "/v1/runs/{runId}/evidence": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "get": { "operationId": "listEvidence", "responses": { "200": { "description": "Evidence and source metadata" } } } },
+    "/v1/runs/{runId}/timeline": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "get": { "operationId": "listTimelineEvents", "responses": { "200": { "description": "Actual bounded tool execution events" } } } },
+    "/v1/runs/{runId}/review": { "parameters": [{ "$ref": "#/components/parameters/RunId" }], "post": { "operationId": "reviewFinding", "description": "Accept, correct, challenge, or withhold a source while preserving run context.", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "domain.schema.json#/$defs/Correction" } } } }, "responses": { "202": { "description": "Bounded follow-up review queued" } } } },
+    "/v1/uploads": { "post": { "operationId": "validateUpload", "responses": { "200": { "description": "Bounded JSONL validation result" } } } },
+    "/v1/reports": { "post": { "operationId": "saveReportRevision", "responses": { "201": { "description": "Immutable report revision" } } } },
+    "/v1/reports/{reportId}/export": { "parameters": [{ "$ref": "#/components/parameters/ReportId" }], "post": { "operationId": "exportReport", "responses": { "200": { "description": "Report export metadata with provenance" } } } }
+  },
+  "components": {
+    "parameters": {
+      "RunId": { "name": "runId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Stable investigation run identifier" },
+      "ReportId": { "name": "reportId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Stable saved report identifier" }
+    }
+  }
+}

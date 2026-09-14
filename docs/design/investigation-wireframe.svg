@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1040" viewBox="0 0 1440 1040" role="img" aria-labelledby="title desc">
+  <title id="title">Incident Lens investigation workspace wireframe</title>
+  <desc id="desc">A calm warm-light investigation notebook with context, findings, evidence drawer, timeline, review actions, and required state labels.</desc>
+  <style>
+    .canvas { fill: #f7f5f0; }
+    .surface { fill: #fffdf9; stroke: #d8d6cf; stroke-width: 2; }
+    .muted { fill: #eeece6; stroke: #d8d6cf; stroke-width: 2; }
+    .ink { fill: #18212b; font-family: Inter, Arial, sans-serif; }
+    .label { fill: #5c6873; font: 600 14px Inter, Arial, sans-serif; letter-spacing: .04em; }
+    .body { fill: #18212b; font: 20px Inter, Arial, sans-serif; }
+    .small { fill: #5c6873; font: 16px Inter, Arial, sans-serif; }
+    .mono { fill: #18212b; font: 15px ui-monospace, SFMono-Regular, monospace; }
+    .accent { fill: #2d5f87; }
+    .line { stroke: #d8d6cf; stroke-width: 2; }
+    .pill { fill: #e7eef3; stroke: #aec0ce; stroke-width: 1; }
+  </style>
+  <rect class="canvas" width="1440" height="1040"/>
+  <text class="ink" x="72" y="62" font-size="27" font-weight="700">Incident Lens</text>
+  <text class="small" x="72" y="90">Investigate  ·  Evaluation  ·  Engineering</text>
+  <rect class="surface" x="64" y="122" width="1312" height="124" rx="12"/>
+  <text class="label" x="90" y="155">CONTEXT</text>
+  <text class="ink" x="90" y="188" font-size="26" font-weight="700">Checkout failure · recorded sample</text>
+  <rect class="pill" x="90" y="202" width="190" height="28" rx="14"/><text class="small" x="104" y="221">Origin · recorded benchmark</text>
+  <rect class="pill" x="292" y="202" width="160" height="28" rx="14"/><text class="small" x="307" y="221">Execution · new analysis</text>
+  <text class="label" x="532" y="164">SERVICE</text><text class="body" x="532" y="192">checkoutservice  ⌄</text>
+  <text class="label" x="782" y="164">TIME WINDOW</text><text class="body" x="782" y="192">12:00–12:10 UTC  ⌄</text>
+  <rect class="accent" x="1198" y="160" width="144" height="48" rx="8"/><text fill="#fff" x="1221" y="190" font-size="18" font-family="Inter,Arial,sans-serif" font-weight="700">Run check</text>
+  <rect class="surface" x="64" y="274" width="790" height="430" rx="12"/>
+  <text class="label" x="94" y="310">FINDING</text>
+  <text class="ink" x="94" y="353" font-size="30" font-weight="700">An unusual service/window ranking</text>
+  <rect x="94" y="377" width="138" height="29" rx="14" fill="#fff0cf"/><text x="109" y="397" fill="#8a5a16" font-size="15" font-family="Inter,Arial,sans-serif" font-weight="700">UNCERTAIN</text>
+  <text class="body" x="94" y="446">The recorded fixture shows a change around the selected</text>
+  <text class="body" x="94" y="476">window. Current evidence ranks an unusual behavior; it does</text>
+  <text class="body" x="94" y="506">not prove causality. A competing explanation remains open.</text>
+  <line class="line" x1="94" y1="538" x2="824" y2="538"/>
+  <text class="label" x="94" y="570">NEXT USEFUL CHECKS</text>
+  <text class="body" x="94" y="604">01  Inspect trace interval for downstream errors</text>
+  <text class="body" x="94" y="635">02  Compare the adjacent baseline window</text>
+  <text class="small" x="94" y="680">Evidence IDs remain linked; the finding can stay unresolved.</text>
+  <rect class="surface" x="878" y="274" width="498" height="430" rx="12"/>
+  <text class="label" x="908" y="310">EVIDENCE DRAWER · ON DEMAND</text>
+  <text class="ink" x="908" y="350" font-size="24" font-weight="700">What supports this?</text>
+  <text class="label" x="908" y="391">METRIC · RECORDED TELEMETRY</text>
+  <text class="mono" x="908" y="420">evidence-001  2023-05-01T12:05Z</text>
+  <text class="small" x="908" y="450">Fixture summary; source version fixture-v1</text>
+  <rect class="muted" x="908" y="474" width="438" height="68" rx="7"/><text class="mono" x="924" y="503">window: 12:00 → 12:10</text><text class="mono" x="924" y="527">access: guest session · recorded</text>
+  <text class="label" x="908" y="585">KNOWLEDGE</text><text class="small" x="908" y="612">No supporting passage retrieved yet.</text>
+  <text class="small" x="908" y="650">[source/version citation appears here]</text>
+  <rect class="surface" x="64" y="732" width="1312" height="108" rx="12"/>
+  <text class="label" x="94" y="768">EXECUTION TIMELINE · COLLAPSED</text>
+  <text class="body" x="94" y="806">▸  Inspect signal completeness   ·   1.2s   ·   read-only   ·   1 evidence item</text>
+  <text class="small" x="94" y="828">Expanding reveals actual parameters, outputs, retries, and failures.</text>
+  <rect class="surface" x="64" y="866" width="1312" height="64" rx="12"/>
+  <text class="body" x="94" y="906">Accept finding</text><text class="body" x="278" y="906">Correct</text><text class="body" x="402" y="906">Challenge</text><text class="body" x="554" y="906">Withhold source</text><text class="body" x="760" y="906">Change window</text><text class="body" x="938" y="906">Re-run</text><rect class="accent" x="1192" y="882" width="150" height="36" rx="7"/><text fill="#fff" x="1215" y="906" font-size="16" font-family="Inter,Arial,sans-serif" font-weight="700">Save / export</text>
+  <text class="label" x="64" y="968">STATE COVERAGE</text>
+  <text class="small" x="208" y="968">empty · loading · running · partial · successful · unresolved/conflicting · failed/retry · cached/replayed</text>
+  <text class="small" x="208" y="995">upload invalid/accepted · saved/export failed</text>
+  <text class="small" x="64" y="1025">Review widths: 1440 · 1280 · 768 · 390 CSS pixels</text>
+</svg>

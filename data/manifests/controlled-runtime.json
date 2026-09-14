@@ -1,0 +1,42 @@
+{
+  "manifest_version": "1.0.0",
+  "manifest_id": "incident-lens-controlled-otel-feature-flag-2026-09-13",
+  "generated_at": "2026-09-13T09:00:00Z",
+  "source": {
+    "source_id": "opentelemetry-demo",
+    "source_version": "opentelemetry-demo@9bfe486ff48ee8a6ea942be74171342cb71a9327",
+    "repository_url": "https://github.com/open-telemetry/opentelemetry-demo",
+    "documentation_url": "https://opentelemetry.io/docs/demo/feature-flags/"
+  },
+  "split": "controlled_failure",
+  "adapter_boundary": {
+    "module": "incident_lens.adapters.otel",
+    "query_contract": "ControlledFailureQuery",
+    "result_contract": "ControlledFailureRecord",
+    "read_only": true,
+    "separate_from_rcaeval": true,
+    "implementation_status": "boundary_only"
+  },
+  "scenarios": [
+    {
+      "scenario_id": "otel-feature-flag-001",
+      "scenario_name": "feature_flag_evaluation",
+      "signals": ["logs", "metrics", "traces"],
+      "observed_at": null,
+      "status": "not_run",
+      "controlled": true
+    }
+  ],
+  "license": {
+    "name": "Apache-2.0",
+    "url": "https://github.com/open-telemetry/opentelemetry-demo/blob/9bfe486ff48ee8a6ea942be74171342cb71a9327/LICENSE",
+    "redistribution": "not exercised; no runtime artifact is included"
+  },
+  "attribution": "OpenTelemetry Authors, OpenTelemetry Demo. Documentation and repository revision checked 2026-09-13.",
+  "raw_data_in_repo": false,
+  "leakage_review": {
+    "hidden_labels_removed": true,
+    "source_filenames_removed": true,
+    "review_status": "passed; adapter has not been executed"
+  }
+}

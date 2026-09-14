@@ -54,3 +54,4 @@ weights/
 # Curated public review artifacts are intentionally trackable.
 !docs/media/
 !docs/evaluation/
+*.egg-info/

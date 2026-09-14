@@ -1,0 +1,40 @@
+{
+  "manifest_version": "1.0.0",
+  "manifest_id": "incident-lens-knowledge-ledger-2026-09-13",
+  "generated_at": "2026-09-13T09:00:00Z",
+  "source": {
+    "source_id": "public-knowledge-ledger",
+    "source_version": "ledger@2026-09-13",
+    "repository_url": "https://opentelemetry.io/docs/demo/"
+  },
+  "split": "public_demo",
+  "knowledge_sources": [
+    {
+      "source_id": "otel-demo-docs",
+      "title": "OpenTelemetry Demo documentation",
+      "url": "https://opentelemetry.io/docs/demo/",
+      "source_version": "docs@2026-09-13",
+      "source_kind": "public_documentation",
+      "citation_required": true,
+      "held_out_content_included": false
+    },
+    {
+      "source_id": "otel-feature-flags-docs",
+      "title": "OpenTelemetry Demo feature flag scenario",
+      "url": "https://opentelemetry.io/docs/demo/feature-flags/",
+      "source_version": "docs@2026-09-13",
+      "source_kind": "public_runbook_reference",
+      "citation_required": true,
+      "held_out_content_included": false
+    }
+  ],
+  "index_status": "ledger_only; no content has been copied or indexed",
+  "license": {
+    "name": "Apache-2.0 for OpenTelemetry Demo; verify each future runbook separately",
+    "url": "https://github.com/open-telemetry/opentelemetry-demo/blob/9bfe486ff48ee8a6ea942be74171342cb71a9327/LICENSE",
+    "redistribution": "no derived index is distributed in Phase 0"
+  },
+  "attribution": "OpenTelemetry Authors. Public documentation ledger checked 2026-09-13.",
+  "raw_data_in_repo": false,
+  "held_out_solutions_excluded": true
+}

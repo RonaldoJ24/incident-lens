@@ -1,0 +1,49 @@
+{
+  "manifest_version": "1.0.0",
+  "manifest_id": "incident-lens-development-re2ob-2026-09-13",
+  "generated_at": "2026-09-13T09:00:00Z",
+  "source": {
+    "source_id": "rcaeval",
+    "dataset": "RCAEval",
+    "subset": "RE2-OB",
+    "source_version": "RCAEval@bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90",
+    "dataset_revision": "RCAEval-HF@afeacb11bcc94dadfd1c8f483ee4377b2b8b614e",
+    "repository_url": "https://github.com/phamquiluan/RCAEval",
+    "dataset_url": "https://huggingface.co/datasets/phamquiluan/RCAEval"
+  },
+  "split": "development",
+  "selection": {
+    "declared_subset_cases": 90,
+    "selected_case_count": 12,
+    "selection_status": "pending_per_case_fetch",
+    "selection_method": "neutral IDs assigned before any raw telemetry fetch; final selection remains evidence-led"
+  },
+  "selected_case_count": 12,
+  "cases": [
+    { "case_id": "dev-re2ob-001", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-002", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-003", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-004", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-005", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-006", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-007", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-008", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-009", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-010", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-011", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" },
+    { "case_id": "dev-re2ob-012", "audited_at": "2026-09-13T09:00:00Z", "source_version": "RCAEval@bb48c5a", "signal_completeness": { "logs": "unknown", "metrics": "unknown", "traces": "unknown" }, "interval_status": "pending_per_case_fetch" }
+  ],
+  "license": {
+    "name": "MIT",
+    "url": "https://github.com/phamquiluan/RCAEval/blob/bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90/LICENSE",
+    "redistribution": "not exercised; raw telemetry is not included"
+  },
+  "attribution": "Pham, Luan et al. RCAEval: A Benchmark for Root Cause Analysis of Microservice Systems with Telemetry Data (2025). Source audit checked 2026-09-13.",
+  "raw_data_in_repo": false,
+  "leakage_review": {
+    "neutral_ids": true,
+    "hidden_labels_removed": true,
+    "source_filenames_removed": true,
+    "review_status": "passed_for_audit_manifest; per-case fetch review pending"
+  }
+}

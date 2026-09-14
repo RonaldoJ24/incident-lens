@@ -1,0 +1,23 @@
+# Local configuration and secret boundary
+
+Phase 0 has no live provider, database, object store, or connected application.
+The checked-in [`.env.example`](../.env.example) contains names only. Copy it
+to an untracked `.env` for local overrides; `.env`, secret directories, raw
+telemetry, uploads, derived artifacts, and model artifacts are ignored by Git.
+
+Configuration is read at process startup and is scoped to the local process:
+
+| Variable | Purpose | Secret? | Phase 0 default |
+| --- | --- | --- | --- |
+| `INCIDENT_LENS_ENV` | Runtime environment label | No | `local` |
+| `INCIDENT_LENS_API_ORIGIN` | Browser API origin | No | `http://localhost:8000` |
+| `INCIDENT_LENS_DATABASE_URL` | Future PostgreSQL connection | Yes | unset |
+| `INCIDENT_LENS_OBJECT_STORE_BUCKET` | Future raw/derived artifact location | No | unset |
+| `INCIDENT_LENS_PROVIDER_API_KEY` | Future model provider credential | Yes | unset |
+
+Real credentials must be injected by a local secret manager or deployment
+secret store, never placed in source, fixtures, manifests, prompts, logs, or
+the frontend bundle. Blank secret fields are valid in this foundation because
+no external integration is implemented. A later phase must fail clearly when a
+required integration is selected without its secret; it must not substitute a
+stored result silently.

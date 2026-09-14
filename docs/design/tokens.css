@@ -1,0 +1,25 @@
+:root {
+  --canvas: #f7f5f0;
+  --surface: #fffdf9;
+  --surface-muted: #eeece6;
+  --ink: #18212b;
+  --ink-muted: #5c6873;
+  --line: #d8d6cf;
+  --accent: #2d5f87;
+  --accent-strong: #17466f;
+  --supported: #246b4f;
+  --uncertain: #8a5a16;
+  --conflicting: #9c3e32;
+  --missing: #66717a;
+  --failed: #9c3e32;
+  --focus: #0b63ce;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --radius-sm: 0.45rem;
+  --radius-md: 0.75rem;
+  --reading-width: 68rem;
+}

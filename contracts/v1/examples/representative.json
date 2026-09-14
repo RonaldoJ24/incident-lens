@@ -1,0 +1,156 @@
+{
+  "contract_version": "v1",
+  "documents": [
+    {
+      "contract_version": "v1",
+      "entity": "session",
+      "payload": {
+        "session_id": "sess-foundation-demo",
+        "created_at": "2026-09-13T09:00:00Z",
+        "expires_at": "2026-09-13T10:00:00Z",
+        "isolation_scope": "guest"
+      }
+    },
+    {
+      "contract_version": "v1",
+      "entity": "case",
+      "payload": {
+        "case_id": "dev-re2ob-001",
+        "title": "Recorded checkout investigation",
+        "telemetry_origin": "recorded_benchmark",
+        "source_interval": {
+          "start": "2023-05-01T12:00:00Z",
+          "end": "2023-05-01T12:10:00Z",
+          "case_or_upload_id": "dev-re2ob-001",
+          "source_version": "rcaeval@bb48c5a",
+          "signal_completeness": { "logs": "available", "metrics": "available", "traces": "available" }
+        },
+        "public_example": true
+      }
+    },
+    {
+      "contract_version": "v1",
+      "entity": "evidence",
+      "payload": {
+        "evidence_id": "evidence-001",
+        "source_type": "metric",
+        "source": { "source_id": "recorded-telemetry", "version": "fixture-v1" },
+        "event_time": "2023-05-01T12:05:00Z",
+        "query_window": {
+          "start": "2023-05-01T12:00:00Z",
+          "end": "2023-05-01T12:10:00Z",
+          "case_or_upload_id": "dev-re2ob-001",
+          "source_version": "fixture-v1",
+          "signal_completeness": { "logs": "available", "metrics": "available", "traces": "available" }
+        },
+        "content_or_summary": "Metric summary supplied by a recorded fixture.",
+        "quality_flags": [],
+        "access_scope": "guest_session"
+      }
+    },
+    {
+      "contract_version": "v1",
+      "entity": "run",
+      "payload": {
+        "run_id": "run-foundation-001",
+        "session_id": "sess-foundation-demo",
+        "case_id": "dev-re2ob-001",
+        "status": "succeeded",
+        "provenance": {
+          "telemetry_origin": "recorded_benchmark",
+          "execution": "new_analysis",
+          "source_interval": {
+            "start": "2023-05-01T12:00:00Z",
+            "end": "2023-05-01T12:10:00Z",
+            "case_or_upload_id": "dev-re2ob-001",
+            "source_version": "rcaeval@bb48c5a",
+            "signal_completeness": { "logs": "available", "metrics": "available", "traces": "available" }
+          },
+          "run_version": "foundation-0.1",
+          "run_time": "2026-09-13T09:05:00Z",
+          "workflow_revision": "workflow-contract-v1",
+          "prior_run_id": null
+        }
+      }
+    },
+    {
+      "contract_version": "v1",
+      "entity": "finding",
+      "payload": {
+        "finding_id": "finding-foundation-001",
+        "run_id": "run-foundation-001",
+        "assessment": "The recorded fixture contains an unusual service/window ranking; causality remains unresolved.",
+        "certainty": "uncertain",
+        "evidence_ids": ["evidence-001"],
+        "next_checks": ["Inspect the trace interval", "Compare the adjacent baseline window"]
+      }
+    },
+    {
+      "contract_version": "v1",
+      "entity": "timeline_event",
+      "payload": {
+        "event_id": "timeline-foundation-001",
+        "run_id": "run-foundation-001",
+        "step": "inspect_signal_completeness",
+        "state": "succeeded",
+        "started_at": "2026-09-13T09:05:01Z",
+        "ended_at": "2026-09-13T09:05:02Z",
+        "scope": { "operation": "read_recorded_manifest", "read_only": true },
+        "evidence_ids": ["evidence-001"],
+        "error_code": null
+      }
+    },
+    {
+      "contract_version": "v1",
+      "entity": "correction",
+      "payload": {
+        "correction_id": "correction-foundation-001",
+        "run_id": "run-foundation-001",
+        "action": "challenge",
+        "note": "Keep the competing explanation visible.",
+        "created_at": "2026-09-13T09:06:00Z",
+        "context_preserved": true
+      }
+    },
+    {
+      "contract_version": "v1",
+      "entity": "report",
+      "payload": {
+        "report_id": "report-foundation-001",
+        "session_id": "sess-foundation-demo",
+        "run_id": "run-foundation-001",
+        "revision": 1,
+        "provenance": {
+          "telemetry_origin": "recorded_benchmark",
+          "execution": "new_analysis",
+          "source_interval": {
+            "start": "2023-05-01T12:00:00Z",
+            "end": "2023-05-01T12:10:00Z",
+            "case_or_upload_id": "dev-re2ob-001",
+            "source_version": "rcaeval@bb48c5a",
+            "signal_completeness": { "logs": "available", "metrics": "available", "traces": "available" }
+          },
+          "run_version": "foundation-0.1",
+          "run_time": "2026-09-13T09:05:00Z",
+          "workflow_revision": "workflow-contract-v1",
+          "prior_run_id": null
+        },
+        "finding_ids": ["finding-foundation-001"],
+        "saved_at": "2026-09-13T09:07:00Z",
+        "repair_claim": false
+      }
+    },
+    {
+      "contract_version": "v1",
+      "entity": "upload",
+      "payload": {
+        "upload_id": "upload-foundation-001",
+        "session_id": "sess-foundation-demo",
+        "content_type": "application/jsonl",
+        "byte_size": 512,
+        "validation": "accepted",
+        "telemetry_origin": "guest_upload"
+      }
+    }
+  ]
+}

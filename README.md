@@ -4,10 +4,10 @@
 
 **Understand what failed, see the evidence, and continue the investigation.**
 
-> **Status: foundation and planning.** The application is not implemented yet.
-> This repository currently contains the product contract and phased delivery
-> plan. Future README claims must be updated only after the corresponding
-> behavior, evidence, and checks exist.
+> **Status: Phase 0 foundation complete.** The repository contains a minimal
+> React/TypeScript and Python contract-first scaffold, audited selection
+> manifests, and a rendered investigation wireframe. The runnable application,
+> persistence, live adapters, and evaluation remain future phases.
 
 Incident Lens is a focused investigation workspace for the period after a
 checkout failure. An engineer selects a service and time window, reviews logs,
@@ -67,6 +67,13 @@ License and attribution terms will be verified when source material is reused.
 
 Read the working contract in [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) and
 the delivery sequence in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
+
+Phase 0 artifacts are in [`contracts/v1`](contracts/v1),
+[`data/manifests`](data/manifests), [`docs/design`](docs/design), and
+[`docs/evaluation`](docs/evaluation). Local configuration and secret handling
+are documented in [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md). The exact
+foundation checks and their results are recorded in the Phase 0 evidence record
+in the implementation plan.
 
 There is no working demo URL, screenshot set, API quickstart, measured result,
 deployment, or live connector to report yet. Public deployment and the owned

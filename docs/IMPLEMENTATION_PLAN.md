@@ -24,7 +24,7 @@ attribution, redistribution, and derived-artifact terms before data is reused.
 
 | Phase | Current evidence | Next gate | Known decision or blocker |
 | --- | --- | --- | --- |
-| 0 | Product specification and delivery plan only | Scaffold, contracts, wireframe, and audited manifests pass their acceptance checks | No external blocker; package conventions, exact source pins, and 10–20 development cases require evidence-led selection |
+| 0 | Scaffold, v1 contracts, rendered wireframe, audited manifests, and focused validation pass (evidence record below) | Phase 1 runnable vertical slice | No external blocker; per-case telemetry fetch and final development selection remain Phase 2 evidence-led work |
 | 1 | None | Phase 0 contracts and design accepted | Blocked by Phase 0; actual build and test commands must be established from the scaffold |
 | 2 | None | Persistent state plus audited source manifests | Blocked by Phases 0–1; object-storage implementation and exact upstream revisions remain open |
 | 3 | None | Quality-reviewed, leakage-safe train/validation manifests | Blocked by Phase 2; method and thresholds remain evidence-led decisions |
@@ -71,8 +71,8 @@ exists in the repository and its result is recorded.
 
 ## Phase 0 — Foundation, interfaces, design, and data audit
 
-**Status:** In progress — specification and delivery plan established;
-application contracts, design artifacts, and data audit remain pending.
+**Status:** Complete — scaffold, contracts, design artifacts, source audit, and
+focused validation are checked in. Application behavior remains Phase 1 work.
 
 **Dependencies:** none.
 
@@ -111,6 +111,15 @@ application contracts, design artifacts, and data audit remain pending.
 Record the actual frontend lint/typecheck, Python package tests, manifest
 validation, and compose configuration commands after the scaffold exists. Do
 not mark these checks complete from speculative paths or commands.
+
+Evidence record 2026-09-13
+Status: complete
+Changed paths: `frontend/`, `backend/`, `contracts/v1/`, `data/manifests/`, `docs/design/`, `docs/evaluation/`, `.env.example`, `docs/CONFIGURATION.md`
+Acceptance evidence: v1 JSON Schema with entity/payload discriminator binding, OpenAPI retrieval/review/export operations, and representative fixture at `contracts/v1/`; rendered wireframe PNG/SVG and token/mapping notes at `docs/design/`; neutral RE2-OB, separate controlled-runtime, and knowledge ledgers at `data/manifests/`; leakage review at `docs/evaluation/leakage-review.md`
+Checks: `pnpm --dir frontend run lint` — pass; `pnpm --dir frontend run typecheck` — pass; `pnpm --dir frontend test` — pass; `pnpm --dir frontend run build` — pass; `PYTHONPATH=backend python3 -m unittest discover -s backend/tests -v` — pass (10 tests); `PYTHONPATH=backend python3 -m incident_lens.validation.manifests data/manifests` — pass (3 manifests); `PYTHONPATH=backend python3 -m incident_lens.validation.contracts contracts/v1/examples/representative.json` — pass (9 documents); `PYTHONPATH=backend python3 -m incident_lens.validation.local README.md docs backend contracts data .env.example frontend/src` — pass; `rsvg-convert -w 1440 -h 1040 docs/design/investigation-wireframe.svg -o docs/design/investigation-wireframe.png` — pass; `git diff --check` — pass
+Fixture/source versions: RCAEval `bb48c5aa9a24f1d5fcc716bdd479ea2d63145c90`; RCAEval Hugging Face `afeacb11bcc94dadfd1c8f483ee4377b2b8b614e`; OpenTelemetry Demo `9bfe486ff48ee8a6ea942be74171342cb71a9327`; domain contracts `v1`
+Known limitations/blockers: no raw telemetry, live connector, provider, persistence, or completed workflow is claimed; RE2-OB cases remain neutral selection records with unknown completeness until the Phase 2 per-case adapter runs; the responsive artifact records 768/390 layout decisions but browser screenshots and focus-trap behavior await Phase 1
+Next gate: Phase 1 runnable vertical slice with persistent state and actual browser review at 1440/1280/768/390
 
 ## Phase 1 — Runnable vertical slice
 

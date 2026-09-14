@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://incident-lens.dev/contracts/v1/domain.schema.json",
+  "title": "Incident Lens domain contracts",
+  "description": "Versioned wire contracts. Telemetry origin and execution are independent.",
+  "type": "object",
+  "required": ["contract_version", "entity", "payload"],
+  "properties": {
+    "contract_version": { "const": "v1" },
+    "entity": {
+      "enum": ["session", "case", "evidence", "run", "finding", "timeline_event", "correction", "report", "upload"]
+    },
+    "payload": {
+      "oneOf": [
+        { "$ref": "#/$defs/Session" },
+        { "$ref": "#/$defs/Case" },
+        { "$ref": "#/$defs/Evidence" },
+        { "$ref": "#/$defs/Run" },
+        { "$ref": "#/$defs/Finding" },
+        { "$ref": "#/$defs/TimelineEvent" },
+        { "$ref": "#/$defs/Correction" },
+        { "$ref": "#/$defs/Report" },
+        { "$ref": "#/$defs/Upload" }
+      ]
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "entity": { "const": "session" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/Session" } } } },
+    { "if": { "properties": { "entity": { "const": "case" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/Case" } } } },
+    { "if": { "properties": { "entity": { "const": "evidence" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/Evidence" } } } },
+    { "if": { "properties": { "entity": { "const": "run" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/Run" } } } },
+    { "if": { "properties": { "entity": { "const": "finding" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/Finding" } } } },
+    { "if": { "properties": { "entity": { "const": "timeline_event" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/TimelineEvent" } } } },
+    { "if": { "properties": { "entity": { "const": "correction" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/Correction" } } } },
+    { "if": { "properties": { "entity": { "const": "report" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/Report" } } } },
+    { "if": { "properties": { "entity": { "const": "upload" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/Upload" } } } }
+  ],
+  "$defs": {
+    "TelemetryOrigin": {
+      "enum": ["recorded_benchmark", "controlled_runtime", "guest_upload", "connected_app"]
+    },
+    "Execution": { "enum": ["new_analysis", "stored_result"] },
+    "SourceInterval": {
+      "type": "object",
+      "required": ["start", "end", "case_or_upload_id", "source_version", "signal_completeness"],
+      "properties": {
+        "start": { "type": "string", "format": "date-time" },
+        "end": { "type": "string", "format": "date-time" },
+        "case_or_upload_id": { "type": "string", "minLength": 1 },
+        "source_version": { "type": "string", "minLength": 1 },
+        "signal_completeness": {
+          "type": "object",
+          "required": ["logs", "metrics", "traces"],
+          "properties": {
+            "logs": { "enum": ["available", "missing", "partial", "unknown"] },
+            "metrics": { "enum": ["available", "missing", "partial", "unknown"] },
+            "traces": { "enum": ["available", "missing", "partial", "unknown"] }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Provenance": {
+      "type": "object",
+      "required": ["telemetry_origin", "execution", "source_interval", "run_version", "run_time", "workflow_revision"],
+      "properties": {
+        "telemetry_origin": { "$ref": "#/$defs/TelemetryOrigin" },
+        "execution": { "$ref": "#/$defs/Execution" },
+        "source_interval": { "$ref": "#/$defs/SourceInterval" },
+        "run_version": { "type": "string", "minLength": 1 },
+        "run_time": { "type": "string", "format": "date-time" },
+        "workflow_revision": { "type": "string", "minLength": 1 },
+        "prior_run_id": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "Session": {
+      "type": "object",
+      "required": ["session_id", "created_at", "expires_at", "isolation_scope"],
+      "properties": {
+        "session_id": { "type": "string", "pattern": "^sess-[a-z0-9-]+$" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "expires_at": { "type": "string", "format": "date-time" },
+        "isolation_scope": { "const": "guest" }
+      },
+      "additionalProperties": false
+    },
+    "Case": {
+      "type": "object",
+      "required": ["case_id", "title", "telemetry_origin", "source_interval", "public_example"],
+      "properties": {
+        "case_id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "title": { "type": "string", "minLength": 1 },
+        "telemetry_origin": { "$ref": "#/$defs/TelemetryOrigin" },
+        "source_interval": { "$ref": "#/$defs/SourceInterval" },
+        "public_example": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "Evidence": {
+      "type": "object",
+      "required": ["evidence_id", "source_type", "source", "event_time", "query_window", "content_or_summary", "quality_flags", "access_scope"],
+      "properties": {
+        "evidence_id": { "type": "string", "pattern": "^evidence-[a-z0-9-]+$" },
+        "source_type": { "enum": ["log", "metric", "trace", "runbook", "prior_knowledge", "metadata"] },
+        "source": {
+          "type": "object",
+          "required": ["source_id", "version"],
+          "properties": {
+            "source_id": { "type": "string", "minLength": 1 },
+            "version": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "event_time": { "type": "string", "format": "date-time" },
+        "query_window": { "$ref": "#/$defs/SourceInterval" },
+        "content_or_summary": { "type": "string", "minLength": 1 },
+        "quality_flags": {
+          "type": "array",
+          "items": { "enum": ["missing", "delayed", "sampled", "duplicate", "malformed", "conflicting", "withheld", "synthetic_controlled"] },
+          "uniqueItems": true
+        },
+        "access_scope": { "enum": ["guest_session", "public_knowledge", "internal_connector"] }
+      },
+      "additionalProperties": false
+    },
+    "Run": {
+      "type": "object",
+      "required": ["run_id", "session_id", "case_id", "status", "provenance"],
+      "properties": {
+        "run_id": { "type": "string", "pattern": "^run-[a-z0-9-]+$" },
+        "session_id": { "type": "string", "pattern": "^sess-[a-z0-9-]+$" },
+        "case_id": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["queued", "running", "partial", "succeeded", "unresolved", "failed", "cancelled"] },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+    "Finding": {
+      "type": "object",
+      "required": ["finding_id", "run_id", "assessment", "certainty", "evidence_ids", "next_checks"],
+      "properties": {
+        "finding_id": { "type": "string", "pattern": "^finding-[a-z0-9-]+$" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "assessment": { "type": "string", "minLength": 1 },
+        "certainty": { "enum": ["supported", "uncertain", "conflicting", "insufficient_evidence"] },
+        "evidence_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "next_checks": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "TimelineEvent": {
+      "type": "object",
+      "required": ["event_id", "run_id", "step", "state", "started_at", "ended_at", "scope", "evidence_ids"],
+      "properties": {
+        "event_id": { "type": "string", "pattern": "^timeline-[a-z0-9-]+$" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "step": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["queued", "running", "succeeded", "partial", "failed", "cancelled"] },
+        "started_at": { "type": "string", "format": "date-time" },
+        "ended_at": { "type": ["string", "null"], "format": "date-time" },
+        "scope": { "type": "object", "required": ["operation", "read_only"], "properties": { "operation": { "type": "string" }, "read_only": { "const": true } }, "additionalProperties": false },
+        "evidence_ids": { "type": "array", "items": { "type": "string" } },
+        "error_code": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "Correction": {
+      "type": "object",
+      "required": ["correction_id", "run_id", "action", "created_at", "context_preserved"],
+      "properties": {
+        "correction_id": { "type": "string", "pattern": "^correction-[a-z0-9-]+$" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "action": { "enum": ["accept", "correct", "challenge", "withhold_source"] },
+        "note": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "context_preserved": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "Report": {
+      "type": "object",
+      "required": ["report_id", "session_id", "run_id", "revision", "provenance", "finding_ids", "saved_at", "repair_claim"],
+      "properties": {
+        "report_id": { "type": "string", "pattern": "^report-[a-z0-9-]+$" },
+        "session_id": { "type": "string", "minLength": 1 },
+        "run_id": { "type": "string", "minLength": 1 },
+        "revision": { "type": "integer", "minimum": 1 },
+        "provenance": { "$ref": "#/$defs/Provenance" },
+        "finding_ids": { "type": "array", "items": { "type": "string" } },
+        "saved_at": { "type": "string", "format": "date-time" },
+        "repair_claim": { "const": false }
+      },
+      "additionalProperties": false
+    },
+    "Upload": {
+      "type": "object",
+      "required": ["upload_id", "session_id", "content_type", "byte_size", "validation", "telemetry_origin"],
+      "properties": {
+        "upload_id": { "type": "string", "pattern": "^upload-[a-z0-9-]+$" },
+        "session_id": { "type": "string", "minLength": 1 },
+        "content_type": { "const": "application/jsonl" },
+        "byte_size": { "type": "integer", "minimum": 0, "maximum": 10485760 },
+        "validation": { "enum": ["accepted", "invalid", "incomplete", "duplicate", "conflicting"] },
+        "telemetry_origin": { "const": "guest_upload" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
