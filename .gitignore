@@ -1,0 +1,56 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# JavaScript/TypeScript dependencies and build output
+node_modules/
+.pnpm-store/
+dist/
+build/
+coverage/
+
+# Python environments, caches, and test output
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local services and generated working files
+*.log
+*.sqlite
+*.sqlite3
+tmp/
+output/
+artifacts/generated/
+artifacts/weights/
+reports/generated/
+screenshots/
+
+# Downloaded or derived telemetry; keep only small, reviewed fixtures in Git.
+data/raw/
+data/uploads/
+data/cache/
+data/derived/
+data/weights/
+rawdata/
+uploads/
+weights/
+.cache/
+*.parquet
+
+# Curated public review artifacts are intentionally trackable.
+!docs/media/
+!docs/evaluation/
