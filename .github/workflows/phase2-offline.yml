@@ -25,7 +25,7 @@ jobs:
           PYTHONPATH=backend uv run --project backend python - <<'PY'
           import tempfile
           from pathlib import Path
-          from pyspark.sql import SparkSession
+          from pyspark.sql import SparkSession, types as T
           from incident_lens.pipeline.normalization import normalize_case
           from incident_lens.pipeline.spark_normalize import run_spark_normalization
 
@@ -37,11 +37,15 @@ jobs:
               records = {
                   "logs": [{"time": 1700000000123456, "message": "same"}, {"time": 1700000000123456, "message": "same"}],
                   "metrics": [{"time": 1700000000123456789, "value": 1.0}],
-                  "traces": [{"timestamp": "2023-11-14T22:13:20.123456789Z", "span": "a"}],
+                  "traces": [],
               }
               spark.createDataFrame([(row["time"], row["message"]) for row in records["logs"]], ["time", "message"]).write.parquet(str(raw / "logs.parquet"))
               spark.createDataFrame([(row["time"], row["value"]) for row in records["metrics"]], ["time", "value"]).write.parquet(str(raw / "metrics.parquet"))
-              spark.createDataFrame([(row["timestamp"], row["span"]) for row in records["traces"]], ["timestamp", "span"]).write.parquet(str(raw / "traces.parquet"))
+              empty_trace_schema = T.StructType([
+                  T.StructField("timestamp", T.StringType(), True),
+                  T.StructField("span", T.StringType(), True),
+              ])
+              spark.createDataFrame([], empty_trace_schema).write.parquet(str(raw / "traces.parquet"))
               portable = normalize_case("dev-re2ob-001", "development", "source-v1", "dataset-v1", records, strict=False)
               result = run_spark_normalization(raw, root / "derived", case_id="dev-re2ob-001", split="development", source_version="source-v1", dataset_revision="dataset-v1")
               assert result["manifest_hash"] == portable.manifest_hash

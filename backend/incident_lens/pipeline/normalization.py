@@ -227,6 +227,7 @@ class NormalizedCase:
     signals: Tuple[SignalQuality, ...]
     window_start: Optional[str]
     window_end: Optional[str]
+    generated_at: str
     manifest_hash: str
 
     def manifest(self) -> Dict[str, Any]:
@@ -235,7 +236,7 @@ class NormalizedCase:
         return {
             "manifest_version": "2.0.0",
             "manifest_id": "incident-lens-derived-%s" % self.case_id,
-            "generated_at": "2026-09-13T09:00:00Z",
+            "generated_at": self.generated_at,
             "source": {
                 "source_id": "rcaeval",
                 "dataset": "RCAEval",
@@ -317,6 +318,9 @@ def normalize_events(
 def _manifest_hash(document: Mapping[str, Any]) -> str:
     without_hash = dict(document)
     without_hash.pop("manifest_hash", None)
+    # Execution time is truthful provenance, not part of deterministic content
+    # identity. Reprocessing identical telemetry therefore keeps the same hash.
+    without_hash.pop("generated_at", None)
     return hashlib.sha256(canonical_json(without_hash).encode("utf-8")).hexdigest()
 
 
@@ -329,6 +333,7 @@ def normalize_case(
     *,
     allowed_split: str = "development",
     strict: bool = True,
+    generated_at: Optional[str] = None,
 ) -> NormalizedCase:
     """Normalize a case into a deterministic, leakage-safe derived object."""
 
@@ -348,10 +353,14 @@ def normalize_case(
         quality.append(summary)
     all_events.sort(key=lambda item: (_event_sort_key(item.timestamp), item.signal, item.event_id))
     times = [item.timestamp for item in all_events]
+    run_generated_at = generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    # Validate an explicitly supplied execution timestamp through the same
+    # timezone-safe parser used for telemetry.
+    run_generated_at = canonical_timestamp(run_generated_at)
     document = {
         "manifest_version": "2.0.0",
         "manifest_id": "incident-lens-derived-%s" % case_id,
-        "generated_at": "2026-09-13T09:00:00Z",
+        "generated_at": run_generated_at,
         "source": {"source_id": "rcaeval", "dataset": "RCAEval", "subset": "RE2-OB", "source_version": source_version, "dataset_revision": dataset_revision},
         "split": split,
         "case_id": case_id,
@@ -374,6 +383,7 @@ def normalize_case(
         signals=tuple(quality),
         window_start=times[0] if times else None,
         window_end=times[-1] if times else None,
+        generated_at=run_generated_at,
         manifest_hash=manifest_hash,
     )
 

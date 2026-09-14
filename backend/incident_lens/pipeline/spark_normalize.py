@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
 
@@ -33,7 +34,9 @@ _UPSTREAM_CASE = re.compile(r"re[123](?:ob|ss|tt)_[a-z0-9-]+_(?:cpu|mem|disk|del
 
 
 def _manifest_hash(document: Dict[str, Any]) -> str:
-    return hashlib.sha256(canonical_json(document).encode("utf-8")).hexdigest()
+    deterministic = dict(document)
+    deterministic.pop("generated_at", None)
+    return hashlib.sha256(canonical_json(deterministic).encode("utf-8")).hexdigest()
 
 
 def run_spark_normalization(
@@ -75,6 +78,12 @@ def run_spark_normalization(
                 signal_summaries.append({"signal": signal, "input_count": 0, "output_count": 0, "duplicate_count": 0, "malformed_count": 0, "first_event_time": None, "last_event_time": None, "sha256": hashlib.sha256(b"").hexdigest()})
                 continue
             frame = spark.read.parquet(str(path))
+            input_count = frame.count()
+            if input_count == 0:
+                output_path = output_root / ("case=%s" % case_id) / ("signal=%s" % signal)
+                frame.write.mode("overwrite").parquet(str(output_path))
+                signal_summaries.append({"signal": signal, "input_count": 0, "output_count": 0, "duplicate_count": 0, "malformed_count": 0, "first_event_time": None, "last_event_time": None, "sha256": hashlib.sha256(b"").hexdigest()})
+                continue
             timestamp_column = next((name for name in ("timestamp", "event_time", "observed_at", "startTimeMillis", "startTime", "start_time", "time") if name in frame.columns), None)
             if not timestamp_column:
                 raise ValueError("%s has no timestamp column" % signal)
@@ -116,7 +125,6 @@ def run_spark_normalization(
                 F.col("__safe_event.event_json").alias("__event_json"),
             )
             frame = frame.withColumn("__sort_timestamp", F.to_timestamp("__timestamp"))
-            input_count = frame.count()
             duplicate_count = input_count - frame.select("__event_id").distinct().count()
             frame = frame.dropDuplicates(["__event_id"]).orderBy(F.col("__sort_timestamp"), F.col("__timestamp"), F.col("__event_id"))
             output_count = frame.count()
@@ -148,7 +156,7 @@ def run_spark_normalization(
         document: Dict[str, Any] = {
             "manifest_version": "2.0.0",
             "manifest_id": "incident-lens-derived-%s" % case_id,
-            "generated_at": "2026-09-13T09:00:00Z",
+            "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
             "source": {"source_id": "rcaeval", "dataset": "RCAEval", "subset": "RE2-OB", "source_version": source_version, "dataset_revision": dataset_revision},
             "split": split,
             "case_id": case_id,

@@ -42,10 +42,13 @@ class Phase2NormalizationTests(unittest.TestCase):
             "metrics": [{"time": 1704067200, "value": 1.0}],
             "traces": [],
         }
-        first = normalize_case("dev-re2ob-001", "development", "source-v1", "dataset-v1", records)
-        second = normalize_case("dev-re2ob-001", "development", "source-v1", "dataset-v1", records)
+        first = normalize_case("dev-re2ob-001", "development", "source-v1", "dataset-v1", records, generated_at="2026-09-14T00:00:00Z")
+        second = normalize_case("dev-re2ob-001", "development", "source-v1", "dataset-v1", records, generated_at="2026-09-14T00:01:00Z")
         self.assertEqual(first.manifest_hash, second.manifest_hash)
-        self.assertEqual(first.manifest(), second.manifest())
+        self.assertNotEqual(first.manifest()["generated_at"], second.manifest()["generated_at"])
+        first_content = {key: value for key, value in first.manifest().items() if key != "generated_at"}
+        second_content = {key: value for key, value in second.manifest().items() if key != "generated_at"}
+        self.assertEqual(first_content, second_content)
         self.assertEqual(first.window_start, "2024-01-01T00:00:00Z")
 
     def test_malformed_timestamp_and_duplicate_are_rejected(self):
